@@ -1,0 +1,1095 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Calder Island Cat Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: guide strip on top, chart-framed island map on the left, instrument panel (KPIs, who pays, tabs) on the right. */
+:root{
+  --bg:#e8edf1; --panel:#fbfcfd; --panel2:#eff3f6; --ink:#101e2a; --mut:#53636f; --line:#d0dae1; --line2:#e2e9ee;
+  --accent:#0a7885; --accent-ink:#ffffff; --accent-soft:#d5ecef;
+  --good:#1b7f45; --bad:#bf3b2c; --warn:#b77712;
+  --sea:#d2e3ee; --grid:#b9cedc; --land-lo:#dce6cb; --land-hi:#a5b690; --coast:#587862; --frame:#c3d2dc; --halo:#ffffffd9; --ring:#ffffff;
+  --t-timber:#8a55d8; --t-masonry:#12917e; --t-commercial:#e0a106; --t-industrial:#3a475a;
+  --t-port:#0f4c81; --t-refinery:#b4432b; --t-power:#b0237a;
+  --c-ded:#9fb0bd; --c-over:#d89a3a; --c-coin:#7f8fd0;
+  --wind:#5b6be0; --slide:#d9622b;
+  --font-d:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-b:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-m:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a121a; --panel:#101b25; --panel2:#16232f; --ink:#e5edf3; --mut:#93a6b5; --line:#243747; --line2:#1b2c3a;
+  --accent:#4cc3cc; --accent-ink:#06222a; --accent-soft:#123941;
+  --good:#5fd08a; --bad:#ff7f6e; --warn:#e6b04a;
+  --sea:#0d2234; --grid:#17324a; --land-lo:#25392f; --land-hi:#4a6552; --coast:#86aa92; --frame:#0b1822; --halo:#0d1620d9; --ring:#0f1a24;
+  --t-timber:#b690f2; --t-masonry:#3fd1b9; --t-commercial:#f2c04a; --t-industrial:#9fb2c8;
+  --t-port:#6fb0ee; --t-refinery:#f08b6e; --t-power:#ee77c0;
+  --c-ded:#5d7284; --c-over:#e0a64a; --c-coin:#8f9de6;
+  --wind:#8d9bff; --slide:#ff9a62; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0a121a; --panel:#101b25; --panel2:#16232f; --ink:#e5edf3; --mut:#93a6b5; --line:#243747; --line2:#1b2c3a;
+  --accent:#4cc3cc; --accent-ink:#06222a; --accent-soft:#123941;
+  --good:#5fd08a; --bad:#ff7f6e; --warn:#e6b04a;
+  --sea:#0d2234; --grid:#17324a; --land-lo:#25392f; --land-hi:#4a6552; --coast:#86aa92; --frame:#0b1822; --halo:#0d1620d9; --ring:#0f1a24;
+  --t-timber:#b690f2; --t-masonry:#3fd1b9; --t-commercial:#f2c04a; --t-industrial:#9fb2c8;
+  --t-port:#6fb0ee; --t-refinery:#f08b6e; --t-power:#ee77c0;
+  --c-ded:#5d7284; --c-over:#e0a64a; --c-coin:#8f9de6;
+  --wind:#8d9bff; --slide:#ff9a62; color-scheme:dark;}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font-b);-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4,p{margin:0}
+.num,.mono{font-family:var(--font-m);font-variant-numeric:tabular-nums}
+
+#app{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:10px;padding-inline:16px;padding-block:10px}
+
+/* ---- top bar ---- */
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{flex:none;color:var(--accent)}
+.brand h1{font:700 19px/1 var(--font-d);letter-spacing:-.01em}
+.brand p{font-size:11.5px;color:var(--mut);margin-top:3px}
+.steps{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1 1 380px;min-width:0}
+.phase{font:600 10.5px/1 var(--font-b);letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-right:2px}
+.phase.gap{margin-left:12px}
+.step{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 12px 5px 6px;font-weight:600;font-size:13px}
+.step .n{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--panel2);font:600 11px var(--font-m);color:var(--mut)}
+.step[aria-current="step"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.step[aria-current="step"] .n{background:var(--accent);color:var(--accent-ink)}
+.step.done .n{background:var(--accent-soft);color:var(--accent)}
+.step:disabled{opacity:.6;cursor:not-allowed;border-style:dashed;padding:5px 12px;font-size:12px;font-weight:500;color:var(--mut)}
+.nav{display:flex;gap:6px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:6px 12px;font-weight:600;font-size:13px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:3px 9px;font-size:12px}
+
+/* ---- guide ---- */
+.guide{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px 22px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 16px;position:relative;align-items:start}
+.guide h2{font:700 19px/1.15 var(--font-d);letter-spacing:-.01em;text-wrap:balance}
+.guide .lede{margin-top:5px;color:var(--mut);max-width:62ch;font-size:13px}
+.guide h3{font:600 10.5px/1 var(--font-b);letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.guide ul{margin:0;padding-left:16px;display:grid;gap:3px;font-size:13px}
+.guide .notice{font-size:13px}
+.guide .notice b{font-family:var(--font-m);font-weight:500}
+.guide[data-c="1"] .lede,.guide[data-c="1"] .try,.guide[data-c="1"] .notice-wrap{display:none}
+.guide[data-c="1"]{grid-template-columns:minmax(0,1fr) auto}
+.chips-inline{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+
+/* ---- stage ---- */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,33vw,430px);gap:12px;min-height:0}
+.mapcol{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}
+.layers{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:500;line-height:1.3}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--mut);flex:none}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.chip[aria-pressed="true"] .dot{background:var(--accent)}
+.chip:hover{border-color:var(--accent)}
+.mapwrap{position:relative;flex:1 1 0;min-height:260px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--frame)}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:7px;padding:6px 9px;font-size:12px;line-height:1.35;max-width:230px;z-index:3;box-shadow:0 4px 14px #0003}
+.tip b{font-weight:600}
+.legend{position:absolute;right:8px;bottom:8px;display:grid;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:11px;z-index:2;max-width:210px}
+.legend:empty{display:none}
+.legend .lg-t{color:var(--mut);margin-bottom:2px}
+.legend .bar2{height:8px;border-radius:4px;border:1px solid var(--line)}
+.legend .ticks{display:flex;justify-content:space-between;font:10.5px var(--font-m);color:var(--mut);margin-top:2px}
+.toast{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:6px 12px;border-radius:7px;font-size:12.5px;z-index:4;pointer-events:none}
+.evtag{position:absolute;top:8px;right:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;z-index:2;max-width:70%}
+.evtag b{font-family:var(--font-m);font-weight:500}
+.scn{display:grid;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.scn-top{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.scn-top .lbl,.lbl{font:600 10.5px/1 var(--font-b);letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-right:2px}
+.sliders{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:6px 18px;align-items:center}
+.sl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px}
+.sl .v{font:500 12px var(--font-m);min-width:7ch;text-align:right}
+.sl.wide{grid-template-columns:auto minmax(0,1fr) auto auto}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0;min-width:0}
+.readout{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--mut)}
+.readout b{color:var(--ink);font-family:var(--font-m);font-weight:500}
+
+/* ---- panel ---- */
+.panel{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line)}
+.kpi{background:var(--panel);padding:9px 11px 8px;min-width:0}
+.kpi .k{font:600 10px/1.2 var(--font-b);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.kpi .val{font:600 22px/1.15 var(--font-m);letter-spacing:-.02em;margin-top:3px;white-space:nowrap}
+.kpi .val small{font-size:12px;color:var(--mut);font-weight:400;margin-left:1px}
+.kpi .sub{font-size:11px;color:var(--mut);margin-top:1px;min-height:15px}
+.kpi .d{font:500 11px var(--font-m);margin-top:2px;min-height:15px}
+.d.up{color:var(--bad)} .d.dn{color:var(--good)}
+.pays{padding:9px 12px 10px;border-bottom:1px solid var(--line);display:grid;gap:6px}
+.pays .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pays .hd span:first-child{font:600 10px/1.2 var(--font-b);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.stack{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--panel2);border:1px solid var(--line)}
+.stack i{display:block;height:100%;min-width:0}
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:11.5px}
+.keys span{display:flex;align-items:center;gap:6px;min-width:0}
+.keys span b{margin-left:auto;font:500 11.5px var(--font-m)}
+.keys i{width:9px;height:9px;border-radius:2px;flex:none}
+.biz{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 8px;padding:8px 12px 9px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.biz .s1{min-height:2.4em;font:600 9.5px/1.2 var(--font-b);letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.biz .s2{font:600 15px/1.25 var(--font-m);margin-top:1px;white-space:nowrap}
+.biz .s3{font:10.5px/1.3 var(--font-m);color:var(--mut);min-height:14px}
+.biz .bad{color:var(--bad)}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--panel2)}
+.tab{flex:1;border:0;background:none;padding:9px 6px;font-weight:600;font-size:13px;color:var(--mut);border-bottom:2px solid transparent}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);background:var(--panel)}
+.tabbody{flex:1;min-height:0;overflow:auto;padding:12px;display:grid;gap:14px;align-content:start}
+.sec{display:grid;gap:8px}
+.sec h4{font:600 10.5px/1 var(--font-b);letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:5px 11px;font-size:12.5px;font-weight:500;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.pal{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pal button{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 8px;text-align:left;min-width:0}
+.pal button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.pal .sw{width:12px;height:12px;border-radius:50%;flex:none;border:2px solid var(--ring);box-shadow:0 0 0 1px var(--line)}
+.pal .nm{display:block;font-weight:600;font-size:12.5px;line-height:1.2}
+.pal .tv{display:block;font:11px var(--font-m);color:var(--mut)}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.stat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat div{background:var(--panel2);border-radius:8px;padding:7px 9px}
+.stat .s1{font:600 10px/1.2 var(--font-b);letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.stat .s2{font:600 16px/1.2 var(--font-m);margin-top:2px}
+.mix{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--panel2)}
+.mix i{display:block}
+.sites{display:grid;gap:5px}
+.site{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 9px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--panel)}
+.site[data-sel="1"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.site .nm{font-weight:600;font-size:13px;text-align:left;border:0;background:none;padding:0;min-width:0;overflow-wrap:anywhere}
+.site .tv{font:500 12.5px var(--font-m)}
+.site .bar3{grid-column:2/4;height:5px;border-radius:3px;background:var(--panel2);overflow:hidden}
+.site .bar3 i{display:block;height:100%;background:var(--accent)}
+.site.off{opacity:.55}
+.site input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+.card{border:1px solid var(--line);border-radius:10px;padding:10px 11px;display:grid;gap:9px;background:var(--panel)}
+.card h3{font:700 16px/1.2 var(--font-d)}
+.card .meta{font-size:12px;color:var(--mut)}
+.hz{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.hz div{background:var(--panel2);border-radius:7px;padding:5px 8px}
+.hz .h1{font:600 9.5px/1.2 var(--font-b);letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.hz .h2{font:500 13.5px var(--font-m);margin-top:1px}
+.terms{display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:9px}
+.terms .sl{grid-template-columns:7.5em minmax(0,1fr) 5em}
+.terms input[type=number]{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:3px 6px;font:500 12.5px var(--font-m)}
+.terms select{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:3px 6px;font-size:12.5px;min-width:0;max-width:100%}
+.limrow{display:grid;grid-template-columns:7.5em minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:12px;color:var(--mut);font-size:13px}
+.note{font-size:12.5px;color:var(--mut)}
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.chart text{font:10.5px var(--font-m);fill:var(--mut)}
+.chart .ax{stroke:var(--line);stroke-width:1;fill:none}
+.chart .gl{stroke:var(--line2);stroke-width:1}
+.chart .lab{fill:var(--ink);font-weight:500}
+.chart .ttl{font:10.5px var(--font-b);fill:var(--mut)}
+.vt{display:grid;gap:5px}
+.vt .r{display:grid;grid-template-columns:7.2em minmax(0,1fr) 3.6em;gap:8px;align-items:center;font-size:12.5px}
+.vt .tr{height:9px;border-radius:5px;background:var(--panel2);overflow:hidden}
+.vt .tr i{display:block;height:100%}
+.vt .pc{font:500 12px var(--font-m);text-align:right}
+.tl{display:grid;gap:6px}
+.tl .r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:baseline;font-size:12.5px}
+.tl .r .tr{grid-column:1/3;height:6px;border-radius:3px;background:var(--panel2);overflow:hidden}
+.tl .r .tr i{display:block;height:100%;background:var(--accent)}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{font:600 10px/1.2 var(--font-b);letter-spacing:.07em;text-transform:uppercase;color:var(--mut);text-align:right;padding:3px 4px;border-bottom:1px solid var(--line)}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:4px;text-align:right;font-family:var(--font-m);font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line2)}
+.split{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--panel2)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+@media (max-width:900px){
+  html,body{height:auto}
+  #app{height:auto;display:flex;flex-direction:column}
+  .guide{grid-template-columns:1fr}
+  .guide .hide{position:absolute;top:10px;right:12px}
+  .guide h2{padding-right:56px}
+  .stage{display:flex;flex-direction:column}
+  .mapwrap{flex:none;height:min(72vw,440px);min-height:240px}
+  .panel{overflow:visible}
+  .tabbody{overflow:visible}
+  .sliders{grid-template-columns:1fr}
+}
+@media (max-width:520px){.biz{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div id="app">
+  <header class="bar">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17c-1-5 3-10 8-11 4-1 5 1 9 1s6 3 4 8-3 6-7 7-6 0-9-1-4-2-5-4z" fill="currentColor" opacity=".18" stroke="currentColor" stroke-width="1.6"/><path d="M2 8c3 0 3-2 6-2M2 12c2 0 3-1 5-1" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>
+      <div><h1>Calder Island</h1><p>Catastrophe modelling introduction</p></div>
+    </div>
+    <nav class="steps" id="steps" aria-label="Training steps"></nav>
+    <div class="nav"><button class="btn" id="back">Back</button><button class="btn primary" id="next">Next</button></div>
+  </header>
+
+  <section class="guide" id="guide" aria-live="polite"></section>
+
+  <main class="stage">
+    <section class="mapcol">
+      <div class="layers" id="layers" role="group" aria-label="Map layers"></div>
+      <div class="mapwrap" id="mapwrap">
+        <canvas id="map" aria-label="Map of Calder Island with insured buildings and hazard layers"></canvas>
+        <div class="tip" id="tip" hidden></div>
+        <div class="toast" id="toast" hidden></div>
+        <div class="evtag" id="evtag" hidden></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="scn" id="scn"></div>
+      <div class="scn" id="comp" hidden></div>
+    </section>
+
+    <aside class="panel">
+      <div class="kpis" id="kpis"></div>
+      <div class="pays" id="pays"></div>
+      <div class="biz" id="biz" hidden></div>
+      <div class="tabs" role="tablist" id="tabs">
+        <button class="tab" role="tab" data-tab="exposure">Exposure</button>
+        <button class="tab" role="tab" data-tab="vuln">Vulnerability</button>
+        <button class="tab" role="tab" data-tab="results">Results</button>
+      </div>
+      <div class="tabbody" id="tabbody" role="tabpanel"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+/*ENGINE_START*/
+// ---------- Geometry: a fictional island, storms arrive from the west ----------
+const W = 960, H = 680, CX = 500, CY = 350, AX = 330, AY = 250;
+function coastR(t) { return 1 + 0.10 * Math.sin(2 * t + 0.6) + 0.07 * Math.sin(3 * t + 2.1) + 0.04 * Math.sin(5 * t + 0.3) + 0.03 * Math.sin(7 * t + 1.3); }
+function landD(x, y) { const dx = (x - CX) / AX, dy = (y - CY) / AY; return Math.hypot(dx, dy) / coastR(Math.atan2(dy, dx)); }
+function isLand(x, y) { return landD(x, y) < 1; }
+const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const MTS = [[340, 250, 520, 95], [470, 165, 430, 80], [410, 440, 400, 95], [650, 300, 300, 85], [560, 370, 260, 70], [250, 330, 120, 45], [560, 250, 110, 50], [620, 430, 120, 55], [380, 150, 120, 40], [720, 340, 90, 45], [500, 520, 90, 50]];
+function elev(x, y) {
+  const d = landD(x, y); if (d >= 1) return 0;
+  let h = 170 * Math.pow(1 - d, 0.7);
+  for (const m of MTS) { const dx = x - m[0], dy = y - m[1]; h += m[2] * Math.exp(-(dx * dx + dy * dy) / (2 * m[3] * m[3])); }
+  h *= sstep(0, 0.07, 1 - d);
+  return Math.max(0, h);
+}
+// Landslide susceptibility 0..1: steep, wet valleys on the west and north flanks, a little in the south-east
+const VALLEYS = [[285, 205, 48, 60, 0.95], [265, 420, 40, 55, 0.8], [430, 105, 55, 34, 0.7], [395, 330, 36, 50, 0.55], [620, 455, 40, 34, 0.35]];
+function suscept(x, y) {
+  if (landD(x, y) >= 1) return 0;
+  let s = 0;
+  for (const v of VALLEYS) { const dx = (x - v[0]) / v[2], dy = (y - v[1]) / v[3]; s = Math.max(s, v[4] * Math.exp(-(dx * dx + dy * dy))); }
+  s *= 0.65 + 0.35 * Math.sin(x * 0.07 + 1.1) * Math.sin(y * 0.06 + 0.4);
+  s = Math.max(s, 0.12 * Math.min(1, elev(x, y) / 450));
+  return Math.min(1, s);
+}
+
+// ---------- Hazard: a storm swath (wind) plus rainfall that triggers landslides ----------
+const LW = 600, LR = 800; // inland decay lengths (px) for wind and rain
+function mkEvent(o) {
+  const sx = o.from === 'E' ? -1 : 1, x0 = sx > 0 ? 40 : 920, ux = sx * Math.cos(o.th), uy = Math.sin(o.th);
+  return Object.assign({}, o, { x0, ux, uy, tL: (sx > 0 ? 112 : 40) / Math.abs(ux), i2s: 1 / (o.sig * o.sig) });
+}
+function evWind(e, x, y) {
+  const rx = x - e.x0, ry = y - e.y0, t = rx * e.ux + ry * e.uy, d = rx * e.uy - ry * e.ux;
+  return e.V * Math.exp(-0.5 * d * d * e.i2s) * (t < e.tL ? 1 : Math.exp(-(t - e.tL) / LW));
+}
+function evRain(e, x, y, el) {
+  const rx = x - e.x0, ry = y - e.y0, t = rx * e.ux + ry * e.uy, d = rx * e.uy - ry * e.ux;
+  const g = Math.exp(-0.5 * d * d * e.i2s / 2.25), inl = t < e.tL ? 1 : Math.exp(-(t - e.tL) / LR);
+  return Math.min(1.5, e.R * g * inl * (1 + 0.35 * Math.min(1, el / 600)));
+}
+const SCN = {
+  aurora: { name: 'Storm Aurora', blurb: 'Central track, landfall at Calder Port', y0: 330, th: 0.04, V: 58, sig: 95, R: 0.7 },
+  brage: { name: 'Storm Brage', blurb: 'Northern track through the western valleys', y0: 185, th: 0.2, V: 52, sig: 92, R: 0.95 },
+  rain: { name: 'Atlantic rain', blurb: 'Little wind, a great deal of rain', y0: 255, th: 0.06, V: 22, sig: 110, R: 1.2 },
+  gale: { name: 'Southern gale', blurb: 'Southern track, misses the port', y0: 500, th: -0.22, V: 54, sig: 88, R: 0.55 }
+};
+
+// ---------- Vulnerability: damage ratio vs intensity (Weibull-shaped wind curves, smooth-step landslide curves) ----------
+// w = [scale m/s, shape, max damage ratio]; l = max damage ratio from a landslide
+const TYPES = {
+  timber: { name: 'Timber house', short: 'Timber', tiv: 1, w: [62, 5.5, 1], l: 0.9 },
+  masonry: { name: 'Masonry house', short: 'Masonry', tiv: 2, w: [74, 5.8, 1], l: 0.7 },
+  commercial: { name: 'Commercial block', short: 'Commercial', tiv: 10, w: [68, 5.6, 1], l: 0.7 },
+  industrial: { name: 'Industrial unit', short: 'Industrial', tiv: 30, w: [64, 5.4, 1], l: 0.65 },
+  port: { name: 'Port terminal', short: 'Port', w: [66, 5, 0.7], l: 0.4 },
+  refinery: { name: 'Refinery', short: 'Refinery', w: [74, 5.5, 0.6], l: 0.7 },
+  power: { name: 'Hydro plant', short: 'Hydro plant', w: [82, 6, 0.5], l: 0.5 }
+};
+function dmgW(T, v) { return T.w[2] * (1 - Math.exp(-Math.pow(v / T.w[0], T.w[1]))); }
+function dmgL(T, s) { const x = Math.min(1, Math.max(0, (s - 0.3) / 0.7)); return T.l * x * x * (3 - 2 * x); }
+
+// ---------- Financial: deductible (share of TIV), limit (absolute, or none), participation ----------
+const defTerms = () => ({ ded: 0.01, lim: null, part: 1 });
+function termsCalc(b, dr) {
+  const gu = dr * b.tiv, ded = Math.min(gu, b.terms.ded * b.tiv), after = gu - ded;
+  const lim = b.terms.lim == null ? Infinity : b.terms.lim, capped = Math.min(after, lim), ins = capped * b.terms.part;
+  return { gu, ded, over: after - capped, coin: capped - ins, ins };
+}
+
+// ---------- Event set ----------
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+const N_EV = 3000, TOTAL_RATE = 1.5;
+function makeEventSet() {
+  const r = rng(20261010), evs = [];
+  for (let i = 0; i < N_EV; i++) {
+    const rainOnly = r() < 0.28, east = !rainOnly && r() < 0.35;
+    const y0 = Math.min(620, Math.max(80, (east ? 300 : 350) + gauss(r) * (east ? 100 : 115)));
+    const th = Math.max(-0.55, Math.min(0.55, gauss(r) * 0.26));
+    let V, R, sig;
+    if (rainOnly) { V = 12 + r() * 12; sig = 90 + r() * 70; R = Math.min(1.4, 0.28 - Math.log(1 - r()) * 0.22); }
+    else if (east) { V = Math.min(66, 20 - Math.log(1 - r()) * 11); sig = 70 + r() * 55; R = Math.min(1.4, Math.max(0.08, 0.2 + 0.7 * (V - 18) / 50 + gauss(r) * 0.12)); }
+    else { V = Math.min(72, 20 - Math.log(1 - r()) * 10.5); sig = 70 + r() * 55; R = Math.min(1.4, Math.max(0.08, 0.25 + 0.7 * (V - 20) / 50 + gauss(r) * 0.14)); }
+    evs.push(mkEvent({ y0, th, V, sig, R, rate: TOTAL_RATE / N_EV, rainOnly, from: east ? 'E' : 'W' }));
+  }
+  return evs;
+}
+function hazardArrays(b, evs) {
+  const T = TYPES[b.type], n = evs.length;
+  b.dW = new Float32Array(n); b.dL = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const e = evs[i], rx = b.x - e.x0, ry = b.y - e.y0, t = rx * e.ux + ry * e.uy, d = rx * e.uy - ry * e.ux, q = d * d * e.i2s;
+    if (q > 12) continue;
+    const v = e.V * Math.exp(-0.5 * q) * (t < e.tL ? 1 : Math.exp(-(t - e.tL) / LW));
+    if (v >= 12) b.dW[i] = dmgW(T, v);
+    const rain = Math.min(1.5, e.R * Math.exp(-0.5 * q / 2.25) * (t < e.tL ? 1 : Math.exp(-(t - e.tL) / LR)) * (1 + 0.35 * Math.min(1, b.el / 600)));
+    const sl = b.S * rain; if (sl >= 0.3) b.dL[i] = dmgL(T, sl);
+  }
+}
+
+// ---------- Portfolio run over the whole event set ----------
+const LOAD = 0.4; // loading on expected loss for expenses and cost of capital
+function runPortfolio(blds, evs) {
+  const n = evs.length, loss = new Float64Array(n), lossW = new Float64Array(n), gu = new Float64Array(n), rate = evs[0].rate;
+  for (const b of blds) {
+    const on = b.on, t = b.tiv, dedA = b.terms.ded * t, lim = b.terms.lim == null ? Infinity : b.terms.lim, part = b.terms.part, dW = b.dW, dL = b.dL; let baal = 0;
+    for (let i = 0; i < n; i++) {
+      const w = dW[i], l = dL[i]; if (w + l < 1e-6) continue;
+      const g = (1 - (1 - w) * (1 - l)) * t; if (on) gu[i] += g;
+      let a = g - dedA; if (a <= 0) continue; if (a > lim) a = lim;
+      const ins = a * part; baal += ins; if (on) { loss[i] += ins; lossW[i] += ins * w / (w + l); }
+    }
+    b.aal = baal * rate;
+  }
+  const idx = Array.from({ length: n }, (_, i) => i).sort((a, c) => loss[c] - loss[a]);
+  let aal = 0, aalW = 0; for (let i = 0; i < n; i++) { aal += loss[i] * rate; aalW += lossW[i] * rate; }
+  return { loss, lossW, gu, idx, rate, n, aal, aalW, aalL: aal - aalW };
+}
+// Premium: risk-based = each risk pays its own expected loss plus loading; flat = one rate on TIV for everyone
+function riskPremium(blds) { let p = 0; for (const b of blds) if (b.on) p += b.aal * (1 + LOAD); return p; }
+function flatRateOf(blds, pf) { let t = 0; for (const b of blds) if (b.on) t += b.tiv; return t > 0 ? pf.aal * (1 + LOAD) / t : 0; }
+function flatPremium(blds, rate) { let t = 0; for (const b of blds) if (b.on) t += b.tiv; return rate * t; }
+// A competitor with a landslide map takes the lowest-slide-risk small risks first
+function competitorTake(blds, share) {
+  const small = blds.filter(b => !b.site).sort((a, c) => a.S - c.S || a.id - c.id), k = Math.round(share * small.length);
+  small.forEach((b, i) => { b.gone = i < k; b.on = b.inc && !b.gone; });
+}
+function lossAtRP(pf, rp) {
+  const f = -Math.log(1 - 1 / rp) / pf.rate - 1; if (f <= 0) return pf.loss[pf.idx[0]];
+  const k = Math.floor(f); if (k + 1 >= pf.n) return 0;
+  const a = pf.loss[pf.idx[k]], c = pf.loss[pf.idx[k + 1]]; return a + (c - a) * (f - k);
+}
+function tailShares(pf, blds, rp) {
+  const m = Math.max(5, Math.round(-Math.log(1 - 1 / rp) / pf.rate)), ids = pf.idx.slice(0, m);
+  let tot = 0; for (const i of ids) tot += pf.loss[i];
+  const out = [];
+  for (const b of blds) {
+    if (!b.on) continue; let s = 0;
+    for (const i of ids) { const w = b.dW[i], l = b.dL[i]; if (w + l < 1e-6) continue; s += termsCalc(b, 1 - (1 - w) * (1 - l)).ins; }
+    out.push({ b, share: tot > 0 ? s / tot : 0 });
+  }
+  return out.sort((a, c) => c.share - a.share);
+}
+
+// ---------- Book construction ----------
+const TOWNS = { west: [[225, 330, 34], [245, 455, 30], [300, 168, 30], [205, 255, 26], [262, 418, 20], [276, 226, 18]], mid: [[500, 400, 38], [470, 245, 34]], east: [[725, 335, 36], [690, 470, 30], [735, 225, 28], [800, 410, 24]] };
+const MIX = [['timber', 0.4], ['masonry', 0.3], ['commercial', 0.2], ['industrial', 0.1]];
+function pickType(r) { let u = r(); for (const m of MIX) { if (u < m[1]) return m[0]; u -= m[1]; } return 'timber'; }
+let NEXT_ID = 1;
+function mkBuilding(o) {
+  const b = Object.assign({ id: NEXT_ID++, on: true, inc: true, gone: false, aal: 0, site: false, terms: defTerms() }, o);
+  b.tiv = o.tiv != null ? o.tiv : TYPES[o.type].tiv; b.S = suscept(b.x, b.y); b.el = elev(b.x, b.y);
+  return b;
+}
+function scatter(keys, n, seed, existing) {
+  const r = rng(seed), towns = keys.reduce((a, k) => a.concat(TOWNS[k]), []), out = []; let tries = 0;
+  const all = (existing || []).slice();
+  while (out.length < n && tries < n * 80) {
+    tries++; const t = towns[Math.floor(r() * towns.length)], x = t[0] + gauss(r) * t[2], y = t[1] + gauss(r) * t[2];
+    if (landD(x, y) > 0.94) continue; if (all.some(o => Math.hypot(o.x - x, o.y - y) < 6)) continue;
+    const b = { x, y, type: pickType(r) }; out.push(b); all.push(b);
+  }
+  return out;
+}
+function coastX(y, fromLeft) { if (fromLeft) { for (let x = 0; x < W; x++) if (isLand(x, y)) return x; } else { for (let x = W - 1; x >= 0; x--) if (isLand(x, y)) return x; } return null; }
+function siteDefs() {
+  const px = coastX(332, true) + 10, ex = coastX(300, false) - 16;
+  return [
+    { name: 'Calder Port', kind: 'port', type: 'port', tiv: 220, x: px, y: 332, note: 'West coast, in the storm path' },
+    { name: 'Marram Refinery', kind: 'refinery', type: 'refinery', tiv: 150, x: px + 38, y: 362, note: 'Two kilometres from the port' },
+    { name: 'Hartley Hydro Plant', kind: 'power', type: 'power', tiv: 160, x: 292, y: 214, note: 'Edge of a slide-prone valley' },
+    { name: 'Eastmere Distribution Park', kind: 'park', type: 'industrial', tiv: 90, x: ex, y: 300, note: 'East coast, sheltered' }
+  ];
+}
+/*ENGINE_END*/
+
+</script>
+<script>
+(function () {
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+function fv(x) { if (x == null || !isFinite(x)) return '–'; if (Number.isInteger(x)) return String(x); const a = Math.abs(x); return x.toFixed(a >= 100 ? 0 : a >= 10 ? 1 : 2); }
+function fm(x) { return fv(x) + 'm'; }
+function pct(x) { if (!isFinite(x)) return '–'; const v = x * 100; return (v >= 10 || v === 0 ? v.toFixed(0) : v.toFixed(1)) + '%'; }
+function pct2(x) { return isFinite(x) ? (x * 100).toFixed(2) + '%' : '–'; }
+
+// ---------- state ----------
+const EVS = makeEventSet();
+const ST = {
+  step: 0, tab: 'exposure', tool: 'place', type: 'timber', cluster: 1,
+  layers: { relief: true, susc: false, wind: false, ls: false, dmg: false, conc: true },
+  scn: 'none', inten: 1, pos: 1, playing: false, sel: null, hover: null, comp: 0, riskPrice: false, flatRate: null, pinNext: false,
+  vperil: 'wind', vtype: 'timber', test: { wind: 45, ls: 0.6 }, scope: 'one', pinned: null, collapsed: false
+};
+let B = [], SITES = [], EV = null, SC = {}, PF = null, KPI = {}, TAIL = [], ready = false, eastSeed = 13;
+function addB(o) { const b = mkBuilding(o); hazardArrays(b, EVS); B.push(b); return b; }
+const getSel = () => B.find(b => b.id === ST.sel) || null;
+
+// ---------- canvas ----------
+const cv = $('#map'), ctx = cv.getContext('2d'), wrap = $('#mapwrap');
+const GC = 4, GW = W / GC, GH = H / GC;
+const VX = 60, VY = 50, VW = 880, VH = 600;
+let vw = 0, vh = 0, dpr = 1, sc = 1, ox = 0, oy = 0, dirty = true;
+let gS = null, gE = null, reliefCv = null, suscCv = null, windCv = null, lsCv = null, coastP = null, cl = {};
+const mkCv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+function hexRGB(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
+function ramp(stops, t) {
+  t = clamp(t, 0, 1);
+  for (let i = 1; i < stops.length; i++) if (t <= stops[i][0]) { const a = stops[i - 1], b = stops[i], u = (t - a[0]) / (b[0] - a[0]); return a[1].map((v, k) => v + (b[1][k] - v) * u); }
+  return stops[stops.length - 1][1];
+}
+const WIND = [[0, [140, 205, 255, 45]], [0.35, [80, 150, 255, 120]], [0.7, [95, 70, 215, 175]], [1, [150, 30, 170, 210]]];
+const LSR = [[0, [255, 205, 80, 90]], [0.5, [235, 110, 40, 165]], [1, [150, 25, 45, 220]]];
+const SUSC = [[0, [236, 208, 140, 0]], [0.3, [226, 176, 90, 95]], [1, [170, 90, 30, 195]]];
+const DMG = [[0, [236, 241, 244]], [0.2, [255, 214, 120]], [0.5, [240, 120, 60]], [1, [160, 16, 44]]];
+const dmgColor = d => { const c = ramp(DMG, d / 0.6); return `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`; };
+function readTheme() {
+  cl = {
+    sea: css('--sea'), grid: css('--grid'), frame: css('--frame'), coast: css('--coast'), halo: css('--halo'), ring: css('--ring'), ink: css('--ink'), mut: css('--mut'),
+    accent: css('--accent'), accentRGB: hexRGB(css('--accent')), lo: hexRGB(css('--land-lo')), hi: hexRGB(css('--land-hi')),
+    types: { timber: css('--t-timber'), masonry: css('--t-masonry'), commercial: css('--t-commercial'), industrial: css('--t-industrial'), port: css('--t-port'), refinery: css('--t-refinery'), power: css('--t-power') }
+  };
+  cl.mid = `rgb(${cl.lo.map((v, i) => ((v + cl.hi[i]) / 2) | 0).join(',')})`;
+}
+function buildCoast() {
+  coastP = new Path2D();
+  for (let a = 0; a <= 360; a += 2) { const t = a * Math.PI / 180, r = coastR(t), x = CX + AX * r * Math.cos(t), y = CY + AY * r * Math.sin(t); a ? coastP.lineTo(x, y) : coastP.moveTo(x, y); }
+  coastP.closePath();
+}
+function buildFields() {
+  gS = new Float32Array(GW * GH); gE = new Float32Array(GW * GH);
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const x = i * GC + GC / 2, y = j * GC + GC / 2, k = j * GW + i; gE[k] = elev(x, y); gS[k] = suscept(x, y); }
+  suscCv = mkCv(GW, GH); const g = suscCv.getContext('2d'), im = g.createImageData(GW, GH);
+  for (let k = 0; k < GW * GH; k++) { const s = gS[k]; if (s < 0.1) continue; const c = ramp(SUSC, (s - 0.1) / 0.9); im.data[k * 4] = c[0]; im.data[k * 4 + 1] = c[1]; im.data[k * 4 + 2] = c[2]; im.data[k * 4 + 3] = c[3]; }
+  g.putImageData(im, 0, 0);
+}
+function buildRelief() {
+  const rw = 480, rh = 340, c = 2, E = new Float32Array(rw * rh);
+  for (let j = 0; j < rh; j++) for (let i = 0; i < rw; i++) E[j * rw + i] = elev(i * c + 1, j * c + 1);
+  reliefCv = mkCv(rw, rh); const g = reliefCv.getContext('2d'), im = g.createImageData(rw, rh);
+  for (let j = 0; j < rh; j++) for (let i = 0; i < rw; i++) {
+    const k = j * rw + i, e = E[k];
+    const ex = (E[j * rw + Math.min(rw - 1, i + 1)] - E[j * rw + Math.max(0, i - 1)]) / (2 * c) * 0.18;
+    const ey = (E[Math.min(rh - 1, j + 1) * rw + i] - E[Math.max(0, j - 1) * rw + i]) / (2 * c) * 0.18;
+    const dot = (0.55 * ex + 0.55 * ey + 0.63) / Math.hypot(ex, ey, 1);
+    const lum = clamp(0.94 + 0.9 * (dot - 0.63), 0.72, 1.14), t = clamp(e / 620, 0, 1);
+    for (let q = 0; q < 3; q++) im.data[k * 4 + q] = clamp((cl.lo[q] + (cl.hi[q] - cl.lo[q]) * t) * lum, 0, 255);
+    im.data[k * 4 + 3] = 255;
+  }
+  g.putImageData(im, 0, 0);
+}
+const Tmax = e => (W - 80) / Math.abs(e.ux) + 60;
+function buildFootprints() {
+  if (!windCv) { windCv = mkCv(GW, GH); lsCv = mkCv(GW, GH); }
+  const wg = windCv.getContext('2d'), lg = lsCv.getContext('2d'), wi = wg.createImageData(GW, GH), li = lg.createImageData(GW, GH);
+  if (EV && gS) {
+    const full = ST.pos >= 0.999, tm = ST.pos * Tmax(EV);
+    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
+      const x = i * GC + GC / 2, y = j * GC + GC / 2, k = j * GW + i;
+      if (!full) { const t = (x - EV.x0) * EV.ux + (y - EV.y0) * EV.uy; if (t > tm + 0.5 * EV.sig) continue; }
+      const v = evWind(EV, x, y);
+      if (v >= 14) { const c = ramp(WIND, (v - 14) / 48); wi.data[k * 4] = c[0]; wi.data[k * 4 + 1] = c[1]; wi.data[k * 4 + 2] = c[2]; wi.data[k * 4 + 3] = c[3]; }
+      if (gS[k] > 0) { const s = gS[k] * evRain(EV, x, y, gE[k]); if (s >= 0.25) { const c = ramp(LSR, (s - 0.25) / 0.75); li.data[k * 4] = c[0]; li.data[k * 4 + 1] = c[1]; li.data[k * 4 + 2] = c[2]; li.data[k * 4 + 3] = c[3]; } }
+    }
+  }
+  wg.putImageData(wi, 0, 0); lg.putImageData(li, 0, 0);
+}
+function resize() {
+  const r = wrap.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1); vw = r.width; vh = r.height;
+  cv.width = Math.max(1, Math.round(vw * dpr)); cv.height = Math.max(1, Math.round(vh * dpr));
+  sc = Math.min(vw / VW, vh / VH); ox = (vw - VW * sc) / 2; oy = (vh - VH * sc) / 2; dirty = true;
+}
+
+// ---------- scenario + portfolio maths ----------
+function curEvent() { if (ST.scn === 'none') return null; const o = SCN[ST.scn]; return mkEvent(Object.assign({}, o, { V: o.V * ST.inten, R: o.R * ST.inten, from: 'W' })); }
+function calcScenario() {
+  EV = curEvent(); SC = { gu: 0, ins: 0, ded: 0, over: 0, coin: 0, w: 0 };
+  for (const b of B) {
+    if (!EV) { b.sv = 0; b.sr = 0; b.ss = 0; b.sdw = 0; b.sdl = 0; b.sdr = 0; b.sgu = 0; b.sins = 0; continue; }
+    const T = TYPES[b.type]; b.sv = evWind(EV, b.x, b.y); b.sr = evRain(EV, b.x, b.y, b.el); b.ss = Math.min(1.5, b.S * b.sr);
+    b.sdw = b.sv < 12 ? 0 : dmgW(T, b.sv); b.sdl = b.ss < 0.3 ? 0 : dmgL(T, b.ss); b.sdr = 1 - (1 - b.sdw) * (1 - b.sdl);
+    const t = termsCalc(b, b.sdr); b.sgu = t.gu; b.sins = t.ins;
+    if (b.on) { SC.gu += t.gu; SC.ins += t.ins; SC.ded += t.ded; SC.over += t.over; SC.coin += t.coin; if (b.sdw + b.sdl > 0) SC.w += t.gu * b.sdw / (b.sdw + b.sdl); }
+  }
+}
+function recompute() {
+  PF = runPortfolio(B, EVS); const tiv = B.filter(b => b.on).reduce((a, b) => a + b.tiv, 0);
+  if (ST.comp === 0 || ST.flatRate == null) ST.flatRate = flatRateOf(B, PF);
+  const flat = ST.step === 6 && !ST.riskPrice, rb = riskPremium(B);
+  KPI = { tiv, aal: PF.aal, rp100: lossAtRP(PF, 100), ev: EV ? SC.ins : null, prem: flat ? flatPremium(B, ST.flatRate) : rb, flat }; TAIL = tailShares(PF, B, 50);
+}
+
+// ---------- change tracking for the delta chips ----------
+let baseline = null, baseTimer = null;
+function beginChange() { if (!baseTimer && KPI.tiv != null) baseline = Object.assign({}, KPI); clearTimeout(baseTimer); baseTimer = setTimeout(() => { baseTimer = null; }, 1600); }
+
+// ---------- refresh pipeline ----------
+let pAll = false, pScn = false, raf = 0;
+function refresh(level) { if (level === 'all') pAll = true; else pScn = true; if (!raf) raf = requestAnimationFrame(() => { raf = 0; const a = pAll, s = pScn; pAll = pScn = false; doRefresh(a, s); }); }
+function doRefresh(all, scn) {
+  competitorTake(B, ST.comp);
+  calcScenario(); if (all || !PF) recompute(); else { KPI.ev = EV ? SC.ins : null; }
+  if (scn) buildFootprints();
+  if (ST.pinNext) { pinCurve(); ST.pinNext = false; }
+  renderKPIs(); renderBiz(); renderPays(); updateTab(); updateScnReadout(); updateNotice(); renderLegend(); dirty = true;
+}
+
+// ---------- map drawing ----------
+function shape(c, kind, x, y, r) {
+  c.beginPath();
+  if (kind === 'port') { c.moveTo(x, y - r * 1.2); c.lineTo(x + r * 1.2, y); c.lineTo(x, y + r * 1.2); c.lineTo(x - r * 1.2, y); }
+  else if (kind === 'refinery') { for (let a = 0; a < 6; a++) { const t = a * Math.PI / 3 + Math.PI / 6; const px = x + Math.cos(t) * r * 1.2, py = y + Math.sin(t) * r * 1.2; a ? c.lineTo(px, py) : c.moveTo(px, py); } }
+  else if (kind === 'power') { c.moveTo(x, y - r * 1.25); c.lineTo(x + r * 1.2, y + r * 0.95); c.lineTo(x - r * 1.2, y + r * 0.95); }
+  else { c.rect(x - r, y - r, r * 2, r * 2); }
+  c.closePath();
+}
+const shortName = b => ({ 'Eastmere Distribution Park': 'Eastmere Park' }[b.name] || b.name);
+function concGrid() {
+  const CELL = 48, m = new Map(); let mx = 0, mk = null;
+  for (const b of B) { if (!b.on) continue; const k = Math.floor(b.x / CELL) + ',' + Math.floor(b.y / CELL); const v = (m.get(k) || 0) + b.tiv; m.set(k, v); if (v > mx) { mx = v; mk = k; } }
+  return { m, CELL, mx, mk };
+}
+function drawConc(c) {
+  const g = concGrid(); if (!g.mx) return; const a = cl.accentRGB;
+  for (const [k, v] of g.m) { const p = k.split(',').map(Number); c.fillStyle = `rgba(${a[0]},${a[1]},${a[2]},${0.12 + 0.6 * Math.sqrt(v / g.mx)})`; c.fillRect(p[0] * g.CELL, p[1] * g.CELL, g.CELL, g.CELL); }
+  const p = g.mk.split(',').map(Number); c.strokeStyle = cl.accent; c.lineWidth = 1.5 / sc; c.strokeRect(p[0] * g.CELL, p[1] * g.CELL, g.CELL, g.CELL);
+}
+function drawTrack(c) {
+  const len = Tmax(EV), tm = ST.pos * len; c.save();
+  c.setLineDash([8 / sc, 6 / sc]); c.strokeStyle = cl.ink; c.globalAlpha = 0.5; c.lineWidth = 1.4 / sc; c.beginPath(); c.moveTo(EV.x0, EV.y0); c.lineTo(EV.x0 + EV.ux * len, EV.y0 + EV.uy * len); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+  if (ST.pos < 0.999) {
+    const px = EV.x0 + EV.ux * tm, py = EV.y0 + EV.uy * tm;
+    c.setLineDash([3 / sc, 4 / sc]); c.strokeStyle = cl.ink; c.beginPath(); c.arc(px, py, EV.sig * 1.5, 0, 6.283); c.stroke(); c.setLineDash([]);
+    c.fillStyle = cl.accent; c.strokeStyle = cl.ring; c.lineWidth = 2 / sc; c.beginPath(); c.arc(px, py, 7 / sc * 1.1, 0, 6.283); c.fill(); c.stroke();
+    c.strokeStyle = cl.ring; c.lineWidth = 1.6 / sc; c.beginPath(); c.arc(px, py, 3.2 / sc, 0.4, 4.4); c.stroke();
+  }
+  c.restore();
+}
+function drawBuildings(c) {
+  const dmg = ST.layers.dmg && EV, r = 3.5;
+  for (const b of B) {
+    if (b.site) continue;
+    if (!b.on) { if (b.gone) { c.beginPath(); c.arc(b.x, b.y, r + 1, 0, 6.283); c.lineWidth = 1.3 / sc; c.strokeStyle = cl.ink; c.globalAlpha = 0.5; c.setLineDash([2 / sc, 2 / sc]); c.stroke(); c.setLineDash([]); c.globalAlpha = 1; } continue; }
+    c.beginPath(); c.arc(b.x, b.y, r, 0, 6.283); c.fillStyle = dmg ? dmgColor(b.sdr) : cl.types[b.type]; c.fill(); c.lineWidth = 1.3 / sc; c.strokeStyle = cl.ring; c.stroke();
+    if (dmg && b.sdr > 0.02) { c.beginPath(); c.arc(b.x, b.y, r + 1.8, 0, 6.283); c.lineWidth = 1 / sc; c.strokeStyle = dmgColor(b.sdr); c.globalAlpha = 0.6; c.stroke(); c.globalAlpha = 1; }
+  }
+  c.font = `600 ${11.5 / sc}px 'Public Sans',sans-serif`; c.textBaseline = 'middle';
+  for (const b of B) {
+    if (!b.site) continue; const R = 7.5;
+    c.globalAlpha = b.on ? 1 : 0.4; shape(c, b.kind, b.x, b.y, R); c.fillStyle = dmg && b.on ? dmgColor(b.sdr) : cl.types[b.type]; c.fill(); c.lineWidth = 2 / sc; c.strokeStyle = cl.ring; c.stroke();
+    if (!b.on) { c.setLineDash([2 / sc, 2 / sc]); c.strokeStyle = cl.ink; c.lineWidth = 1 / sc; c.stroke(); c.setLineDash([]); }
+    c.globalAlpha = 1;
+    const left = b.kind === 'park', nm = shortName(b), tx = b.x + (left ? -(R + 7) : R + 7), ty = b.y + (b.kind === 'refinery' ? 6 : 0);
+    c.textAlign = left ? 'right' : 'left'; c.lineWidth = 3.2 / sc; c.strokeStyle = cl.halo; c.fillStyle = cl.ink; c.strokeText(nm, tx, ty); c.fillText(nm, tx, ty);
+  }
+  const sel = getSel(), hov = ST.hover != null ? B.find(b => b.id === ST.hover) : null;
+  for (const b of [hov, sel]) {
+    if (!b) continue; c.beginPath(); c.arc(b.x, b.y, (b.site ? 13 : 8.5), 0, 6.283); c.lineWidth = (b === sel ? 2.2 : 1.4) / sc; c.strokeStyle = cl.accent; if (b !== sel) c.setLineDash([3 / sc, 3 / sc]); c.stroke(); c.setLineDash([]);
+  }
+}
+function draw() {
+  dirty = false; if (!vw || !ready) return; const c = ctx;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.fillStyle = cl.frame; c.fillRect(0, 0, vw, vh);
+  c.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox - VX * sc), dpr * (oy - VY * sc)); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+  c.save(); c.beginPath(); c.rect(0, 0, W, H); c.clip();
+  c.fillStyle = cl.sea; c.fillRect(0, 0, W, H);
+  c.strokeStyle = cl.grid; c.lineWidth = 1 / sc; c.globalAlpha = 0.55; c.beginPath();
+  for (let x = 100; x < W; x += 100) { c.moveTo(x, 0); c.lineTo(x, H); } for (let y = 100; y < H; y += 100) { c.moveTo(0, y); c.lineTo(W, y); } c.stroke(); c.globalAlpha = 1;
+  c.save(); c.clip(coastP); if (ST.layers.relief && reliefCv) c.drawImage(reliefCv, 0, 0, W, H); else { c.fillStyle = cl.mid; c.fillRect(0, 0, W, H); } c.restore();
+  if (ST.layers.wind && EV) c.drawImage(windCv, 0, 0, W, H);
+  c.save(); c.clip(coastP); if (ST.layers.susc) c.drawImage(suscCv, 0, 0, W, H); if (ST.layers.ls && EV) c.drawImage(lsCv, 0, 0, W, H); c.restore();
+  c.lineWidth = 1.6 / sc; c.strokeStyle = cl.coast; c.stroke(coastP);
+  if (ST.layers.conc) drawConc(c);
+  if (EV && (ST.layers.wind || ST.layers.ls)) drawTrack(c);
+  drawBuildings(c);
+  c.font = `600 ${10.5 / sc}px 'Public Sans',sans-serif`; c.fillStyle = cl.mut; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+  try { c.letterSpacing = (1.4 / sc) + 'px'; } catch (e) { }
+  c.fillText('STORMS ARRIVE FROM THE WEST  →', VX + 24, VY + 30); try { c.letterSpacing = '0px'; } catch (e) { }
+  c.strokeStyle = cl.ink; c.lineWidth = 1.6 / sc; c.beginPath(); const sy = VY + VH - 26; c.moveTo(VX + 24, sy); c.lineTo(VX + 124, sy); c.moveTo(VX + 24, sy - 5); c.lineTo(VX + 24, sy + 5); c.moveTo(VX + 124, sy - 5); c.lineTo(VX + 124, sy + 5); c.stroke();
+  c.fillStyle = cl.ink; c.font = `500 ${11 / sc}px 'IBM Plex Mono',monospace`; c.fillText('10 km', VX + 30, sy - 8);
+  c.restore();
+}
+function loop() { if (dirty) draw(); requestAnimationFrame(loop); }
+
+// ---------- map interaction ----------
+const tip = $('#tip'), toastEl = $('#toast'); let toastT = 0;
+function toast(msg) { toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { toastEl.hidden = true; }, 2200); }
+function pt(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left - ox) / sc + VX, (e.clientY - r.top - oy) / sc + VY]; }
+function nearest(x, y) {
+  let best = null, bd = 1e9;
+  for (const b of B) { const d = Math.hypot(b.x - x, b.y - y), th = (b.site ? 13 : 9) / sc; if (d < th && d - (b.site ? 6 : 0) < bd) { bd = d - (b.site ? 6 : 0); best = b; } }
+  return best;
+}
+function tipHTML(b) {
+  const T = TYPES[b.type]; let h = `<b>${b.name || T.name}</b><br>${b.name ? T.name + ' · ' : ''}TIV ${fm(b.tiv)}`;
+  if (b.gone) return h + '<br>Taken by the competitor';
+  if (EV) h += `<br>Gust ${b.sv.toFixed(0)} m/s · slide index ${b.ss.toFixed(2)}<br>Damage ${pct(b.sdr)} · insured loss ${fm(b.sins)}`;
+  return h;
+}
+cv.addEventListener('pointermove', e => {
+  const [x, y] = pt(e), h = nearest(x, y), id = h ? h.id : null; if (id !== ST.hover) { ST.hover = id; dirty = true; }
+  let html = '';
+  if (h) html = tipHTML(h);
+  else if (ST.layers.conc && isLand(x, y)) { let s = 0, n = 0; for (const b of B) if (b.on && Math.hypot(b.x - x, b.y - y) < 50) { s += b.tiv; n++; } html = `<b>Within 5 km</b><br>${n} risks · TIV ${fm(s)}`; }
+  if (html) { const r = wrap.getBoundingClientRect(); tip.innerHTML = html; tip.hidden = false; const tw = tip.offsetWidth; let lx = e.clientX - r.left + 14; if (lx + tw > r.width - 6) lx = e.clientX - r.left - tw - 14; tip.style.left = Math.max(4, lx) + 'px'; tip.style.top = Math.min(r.height - tip.offsetHeight - 4, e.clientY - r.top + 14) + 'px'; } else tip.hidden = true;
+  cv.style.cursor = h ? 'pointer' : (ST.tool === 'place' ? 'copy' : ST.tool === 'erase' ? 'not-allowed' : 'default');
+});
+cv.addEventListener('pointerleave', () => { ST.hover = null; tip.hidden = true; dirty = true; });
+cv.addEventListener('contextmenu', e => { e.preventDefault(); const [x, y] = pt(e), h = nearest(x, y); if (h && !h.site) removeB([h.id]); });
+cv.addEventListener('click', e => {
+  const [x, y] = pt(e), hit = nearest(x, y);
+  if (ST.tool === 'erase') {
+    if (hit && hit.site) { toast('Large sites stay in the book. Untick one in the Exposure tab to leave it out.'); return; }
+    const ids = ST.cluster === 1 ? (hit ? [hit.id] : []) : B.filter(b => !b.site && Math.hypot(b.x - x, b.y - y) < 26).map(b => b.id);
+    if (ids.length) removeB(ids); return;
+  }
+  if (hit) { selectB(hit.id); return; }
+  if (ST.tool === 'select') { selectB(null); return; }
+  if (x < 0 || y < 0 || x > W || y > H) return;
+  if (!isLand(x, y)) { toast('Buildings go on land.'); return; }
+  placeAt(x, y, ST.cluster, ST.type);
+});
+function placeAt(x, y, n, type) {
+  beginChange(); let made = 0, tries = 0;
+  while (made < n && tries < n * 40) {
+    tries++; let px = x, py = y; if (n > 1) { const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * 26; px += Math.cos(a) * r; py += Math.sin(a) * r; }
+    if (landD(px, py) > 0.97) continue; if (B.some(o => Math.hypot(o.x - px, o.y - py) < 5.5)) continue;
+    addB({ x: px, y: py, type }); made++;
+  }
+  if (!made) { toast('No room there. Try a spot away from other buildings.'); return; }
+  refresh('all');
+}
+function removeB(ids) { beginChange(); B = B.filter(b => !ids.includes(b.id)); if (ST.sel != null && !getSel()) { ST.sel = null; selBuilt = null; } refresh('all'); }
+function selectB(id) {
+  ST.sel = id; const b = getSel(); if (b && TYPES[b.type]) ST.vtype = b.type; selBuilt = null; dirty = true; updateTab(); renderGuideNotice();
+}
+function loadBookSync(kind) {
+  B = B.filter(b => b.site);
+  const list = kind === 'west' ? scatter(['west'], 70, 11, B) : scatter(['west', 'mid', 'east'], 70, 12, B);
+  for (const s of list) addB(s); if (ST.sel != null && !getSel()) { ST.sel = null; selBuilt = null; }
+}
+function loadBook(kind) { beginChange(); loadBookSync(kind); refresh('all'); }
+function resetTermsAll() { for (const b of B) b.terms = defTerms(); selBuilt = null; }
+function restoreComp() { ST.comp = 0; ST.riskPrice = false; ST.flatRate = null; }
+function addEast() { beginChange(); const list = scatter(['east'], 35, eastSeed++, B); for (const s of list) addB(s); refresh('all'); }
+function clearSmall() { beginChange(); B = B.filter(b => b.site); if (ST.sel != null && !getSel()) { ST.sel = null; selBuilt = null; } refresh('all'); }
+
+// ---------- KPIs and who-pays ----------
+function renderKPIs() {
+  const items = [
+    { k: 'ev', label: 'This event', val: KPI.ev, sub: EV ? SCN[ST.scn].name : 'No event selected' },
+    { k: 'aal', label: 'Avg annual loss', val: KPI.aal, sub: pct2(KPI.aal / KPI.tiv) + ' of TIV a year' },
+    { k: 'rp100', label: '1-in-100 year', val: KPI.rp100, sub: pct(KPI.rp100 / KPI.tiv) + ' of TIV' }
+  ];
+  $('#kpis').innerHTML = items.map(it => {
+    let d = '', cls = ''; if (baseline && it.val != null && baseline[it.k] != null) { const x = it.val - baseline[it.k]; if (Math.abs(x) >= 0.05) { cls = x > 0 ? 'up' : 'dn'; d = (x > 0 ? '▲ +' : '▼ −') + fv(Math.abs(x)) + 'm'; } }
+    return `<div class="kpi" title="Insured loss, after policy terms"><div class="k">${it.label}</div><div class="val">${fv(it.val)}<small>${it.val == null ? '' : 'm'}</small></div><div class="sub">${it.sub}</div><div class="d ${cls}">${d}</div></div>`;
+  }).join('');
+}
+function renderPays() {
+  const el = $('#pays');
+  if (!EV || SC.gu <= 1e-6) { el.innerHTML = `<div class="hd"><span>Who pays for this event</span><span class="note">${EV ? 'No loss in this event' : 'Pick a scenario under the map'}</span></div>`; return; }
+  const segs = [['Insurer pays', SC.ins, 'var(--accent)'], ['Deductible', SC.ded, 'var(--c-ded)'], ['Above the limit', SC.over, 'var(--c-over)'], ['Co-insurance share', SC.coin, 'var(--c-coin)']];
+  el.innerHTML = `<div class="hd"><span>Who pays for this event</span><span class="mono" style="font-size:12px">Ground-up ${fm(SC.gu)}</span></div>
+  <div class="stack" role="img" aria-label="Split of ground-up loss">${segs.map(s => `<i style="width:${(s[1] / SC.gu * 100).toFixed(2)}%;background:${s[2]}"></i>`).join('')}</div>
+  <div class="keys">${segs.map(s => `<span><i style="background:${s[2]}"></i>${s[0]}<b>${fm(s[1])}</b></span>`).join('')}</div>`;
+}
+
+// ---------- tabs ----------
+const tabbody = $('#tabbody'); let selBuilt = null, builtTab = null;
+function switchTab(t) {
+  ST.tab = t; $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  builtTab = null; buildTab();
+}
+function buildTab() { builtTab = ST.tab; selBuilt = null; if (ST.tab === 'exposure') buildExposure(); else if (ST.tab === 'vuln') buildVuln(); else buildResults(); }
+function updateTab() { if (!ready) return; if (builtTab !== ST.tab) buildTab(); else if (ST.tab === 'exposure') updateExposure(); else if (ST.tab === 'vuln') updateVuln(); else updateResults(); }
+
+// --- Exposure ---
+const PAL = ['timber', 'masonry', 'commercial', 'industrial'];
+function buildExposure() {
+  tabbody.innerHTML = `
+  <div class="sec"><h4>Add risks to the book</h4>
+    <div class="row"><div class="seg" id="toolSeg" role="group" aria-label="Map tool">${[['place', 'Place'], ['select', 'Select'], ['erase', 'Erase']].map(t => `<button data-tool="${t[0]}" aria-pressed="${ST.tool === t[0]}">${t[1]}</button>`).join('')}</div>
+      <span class="note" id="toolNote"></span></div>
+    <div class="pal" id="pal">${PAL.map(k => `<button data-type="${k}" aria-pressed="${ST.type === k}"><span class="sw" style="background:var(--t-${k})"></span><span><span class="nm">${TYPES[k].name}</span><span class="tv">${fm(TYPES[k].tiv)} each</span></span></button>`).join('')}</div>
+    <div class="row"><span class="lbl">Per click</span><div class="seg" id="clSeg" role="group" aria-label="Buildings per click">${[1, 5, 15].map(n => `<button data-n="${n}" aria-pressed="${ST.cluster === n}">${n === 1 ? '1' : '×' + n}</button>`).join('')}</div></div>
+    <div class="presets"><button class="btn sm" data-act="book-west">West coast book</button><button class="btn sm" data-act="book-div">Diversified book</button><button class="btn sm" data-act="add-east">+ 35 east coast risks</button><button class="btn sm" data-act="clear">Clear small risks</button></div>
+  </div>
+  <div class="sec" id="exTot"></div><div class="sec" id="exSites"></div><div class="sec" id="exSel"></div>`;
+  updateExposure();
+}
+function updateExposure() {
+  const on = B.filter(b => b.on), tiv = KPI.tiv || 0, small = on.filter(b => !b.site), sitesTiv = on.filter(b => b.site).reduce((a, b) => a + b.tiv, 0);
+  $('#toolNote').textContent = ST.tool === 'place' ? 'Click land to add' : ST.tool === 'select' ? 'Click a risk to open it' : 'Click a risk to remove it';
+  $$('#toolSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tool === ST.tool)));
+  $$('#pal button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === ST.type)));
+  $$('#clSeg button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === ST.cluster)));
+  const mix = PAL.map(k => ({ k, v: small.filter(b => b.type === k).reduce((a, b) => a + b.tiv, 0), n: small.filter(b => b.type === k).length }));
+  const mixTot = mix.reduce((a, m) => a + m.v, 0) || 1;
+  $('#exTot').innerHTML = `<h4>The book so far</h4><div class="stat"><div><div class="s1">Total TIV</div><div class="s2">${fm(tiv)}</div></div><div><div class="s1">Small risks</div><div class="s2">${small.length}</div></div><div><div class="s1">Large sites</div><div class="s2">${pct(tiv ? sitesTiv / tiv : 0)}</div></div></div>
+    <div class="mix" role="img" aria-label="Small-risk value by construction type">${mix.map(m => `<i style="width:${m.v / mixTot * 100}%;background:var(--t-${m.k})"></i>`).join('')}</div>
+    <div class="note">${mix.map(m => `${TYPES[m.k].short} ${m.n}`).join(' · ')}${B.some(b => b.gone) ? ' · ' + B.filter(b => b.gone).length + ' taken by competitor' : ''}</div>`;
+  $('#exSites').innerHTML = `<h4>Large sites</h4><div class="sites">${B.filter(b => b.site).map(b => `<div class="site ${b.on ? '' : 'off'}" data-sel="${b.id === ST.sel ? 1 : 0}">
+      <input type="checkbox" data-site="${b.id}" ${b.on ? 'checked' : ''} aria-label="Include ${b.name} in the book"><button class="nm" data-pick="${b.id}">${b.name}<div class="meta note" style="font-weight:400">${b.note}</div></button><span class="tv">${fm(b.tiv)}</span>
+      <div class="bar3"><i style="width:${b.on && tiv ? b.tiv / tiv * 100 : 0}%"></i></div></div>`).join('')}</div>`;
+  const sel = getSel();
+  if (!sel) { selBuilt = null; $('#exSel').innerHTML = `<div class="empty">Select a risk on the map, or a large site above, to see its hazard and set its policy terms. Defaults: 1% deductible, no limit, 100% participation.</div>`; return; }
+  if (selBuilt !== sel.id) { selBuilt = sel.id; $('#exSel').innerHTML = selCard(sel); }
+  updateSelReadout(sel);
+}
+function selCard(b) {
+  const T = TYPES[b.type], t = b.terms;
+  const scopes = [['one', 'This risk only'], ['type', 'All ' + (b.site ? 'sites of this kind' : T.short.toLowerCase() + ' risks')], ['all', 'Whole book']];
+  return `<div class="card"><div><h3>${b.name || T.name}</h3><div class="meta">${T.name} · TIV <span class="mono">${fm(b.tiv)}</span> · slide-proneness <span class="mono">${b.S.toFixed(2)}</span></div></div>
+  <div class="hz" id="selHz"></div>
+  <div class="terms"><h4>Policy terms</h4>
+    <div class="sl"><label for="tDed">Deductible</label><input id="tDed" type="range" min="0" max="15" step="0.5" value="${t.ded * 100}"><span class="v" id="tDedV"></span></div>
+    <div class="limrow"><label for="tLim">Policy limit</label><input id="tLim" type="number" min="1" step="5" value="${t.lim == null ? Math.round(b.tiv * 0.5) : t.lim}" ${t.lim == null ? 'disabled' : ''}><label class="note"><input type="checkbox" id="tNoLim" ${t.lim == null ? 'checked' : ''}> No limit</label></div>
+    <div class="sl"><label for="tPart">Participation</label><input id="tPart" type="range" min="10" max="100" step="5" value="${t.part * 100}"><span class="v" id="tPartV"></span></div>
+    <div class="row"><label for="tScope" class="note">Apply to</label><select id="tScope">${scopes.map(s => `<option value="${s[0]}" ${ST.scope === s[0] ? 'selected' : ''}>${s[1]}</option>`).join('')}</select><button class="btn sm" data-act="reset-terms">Reset terms</button></div>
+  </div></div>`;
+}
+function updateSelReadout(b) {
+  const t = b.terms; const dv = $('#tDedV'); if (!dv) return;
+  dv.textContent = (t.ded * 100).toFixed(1) + '%'; $('#tPartV').textContent = (t.part * 100).toFixed(0) + '%';
+  const hz = $('#selHz');
+  hz.innerHTML = EV ? [['Peak gust', b.sv.toFixed(0) + ' m/s'], ['24-h rain', (b.sr * 250).toFixed(0) + ' mm'], ['Slide index', b.ss.toFixed(2)], ['Damage ratio', pct(b.sdr)], ['Ground-up', fm(b.sgu)], ['Insured', fm(b.sins)]].map(x => `<div><div class="h1">${x[0]}</div><div class="h2">${x[1]}</div></div>`).join('')
+    : `<div style="grid-column:1/4" class="note">No event selected. Pick a scenario under the map to see hazard at this site.</div>`;
+}
+function scopeTargets(sel) { if (ST.scope === 'all') return B; if (ST.scope === 'type') return B.filter(b => b.type === sel.type && b.site === sel.site); return [sel]; }
+function setTerms(patch) {
+  const sel = getSel(); if (!sel) return; beginChange();
+  for (const b of scopeTargets(sel)) {
+    if ('ded' in patch) b.terms.ded = patch.ded;
+    if ('part' in patch) b.terms.part = patch.part;
+    if ('lim' in patch) b.terms.lim = patch.lim == null ? null : (b === sel ? patch.lim : patch.lim / sel.tiv * b.tiv);
+  }
+  refresh('all');
+}
+function setTermsFor(targets, patch) { beginChange(); for (const b of targets) Object.assign(b.terms, patch); selBuilt = null; refresh('all'); }
+
+// --- Vulnerability ---
+function buildVuln() {
+  tabbody.innerHTML = `<div class="sec"><div class="row"><span class="lbl">Peril</span><div class="seg" id="perilSeg" role="group"><button data-peril="wind" aria-pressed="${ST.vperil === 'wind'}">Wind</button><button data-peril="ls" aria-pressed="${ST.vperil === 'ls'}">Landslide</button></div></div>
+    <div id="vChart"></div><div class="row" id="vTypes"></div>
+    <div class="sl wide"><label for="vTest" id="vTestL">Test gust</label><input id="vTest" type="range"><span class="v" id="vTestV"></span></div></div>
+    <div class="sec"><h4 id="vTblT"></h4><div class="vt" id="vTable"></div></div><p class="note" id="vNote"></p>`;
+  updateVuln(true);
+}
+function vKeys() { const k = PAL.slice(), s = getSel(); if (s && !k.includes(s.type)) k.push(s.type); return k; }
+function syncVTest() {
+  const w = ST.vperil === 'wind', r = $('#vTest'); if (!r) return;
+  r.min = w ? 10 : 0; r.max = w ? 80 : 1.2; r.step = w ? 1 : 0.02; r.value = ST.test[ST.vperil];
+  $('#vTestL').textContent = w ? 'Test gust' : 'Test slide index'; $('#vTestV').textContent = w ? ST.test.wind + ' m/s' : ST.test.ls.toFixed(2);
+}
+function updateVuln(first) {
+  const keys = vKeys(); if (!keys.includes(ST.vtype)) ST.vtype = keys[0];
+  $$('#perilSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.peril === ST.vperil)));
+  if (first || $('#vTest').dataset.p !== ST.vperil) { syncVTest(); $('#vTest').dataset.p = ST.vperil; }
+  const w = ST.vperil === 'wind', tv = ST.test[ST.vperil], f = (k, x) => w ? dmgW(TYPES[k], x) : dmgL(TYPES[k], x);
+  $('#vTestV').textContent = w ? tv + ' m/s' : tv.toFixed(2);
+  const wd = 340, h = 210, m = { l: 38, r: 10, t: 12, b: 34 }, pw = wd - m.l - m.r, ph = h - m.t - m.b, xmax = w ? 80 : 1.2;
+  const X = v => m.l + v / xmax * pw, Y = d => m.t + (1 - d) * ph; let s = '';
+  for (let i = 0; i <= 5; i++) { s += `<line class="gl" x1="${m.l}" x2="${wd - m.r}" y1="${Y(i / 5)}" y2="${Y(i / 5)}"/><text x="${m.l - 6}" y="${Y(i / 5) + 3.5}" text-anchor="end">${i * 20}%</text>`; }
+  for (const v of (w ? [0, 20, 40, 60, 80] : [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2])) s += `<text x="${X(v)}" y="${h - m.b + 14}" text-anchor="middle">${w ? v : v.toFixed(1)}</text>`;
+  s += `<line class="ax" x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${m.t + ph}"/><line class="ax" x1="${m.l}" x2="${wd - m.r}" y1="${m.t + ph}" y2="${m.t + ph}"/>`;
+  s += `<text class="ttl" x="${m.l + pw / 2}" y="${h - 3}" text-anchor="middle">${w ? 'Peak gust (m/s)' : 'Landslide index = slide-proneness × rainfall'}</text><text class="ttl" x="${m.l}" y="8">Damage ratio</text>`;
+  s += `<line x1="${X(tv)}" x2="${X(tv)}" y1="${m.t}" y2="${m.t + ph}" stroke="var(--mut)" stroke-dasharray="3 3"/>`;
+  const order = keys.filter(k => k !== ST.vtype).concat(ST.vtype);
+  for (const k of order) {
+    let d = ''; for (let i = 0; i <= 80; i++) { const x = xmax * i / 80; d += (i ? 'L' : 'M') + X(x).toFixed(1) + ' ' + Y(f(k, x)).toFixed(1); }
+    const on = k === ST.vtype; s += `<path d="${d}" fill="none" style="stroke:var(--t-${k})" stroke-width="${on ? 3 : 1.5}" opacity="${on ? 1 : 0.55}" stroke-linecap="round"/>`;
+    s += `<circle cx="${X(tv)}" cy="${Y(f(k, tv))}" r="${on ? 4.5 : 3}" style="fill:var(--t-${k})" stroke="var(--panel)" stroke-width="1.5"/>`;
+  }
+  const sel = getSel();
+  if (sel && EV) {
+    const vx = w ? sel.sv : sel.ss, vy = w ? sel.sdw : sel.sdl, px = X(Math.min(vx, xmax)), py = Y(vy);
+    s += `<path d="M${px} ${py - 7}L${px + 7} ${py}L${px} ${py + 7}L${px - 7} ${py}Z" fill="var(--ink)" stroke="var(--panel)" stroke-width="1.5"/>`;
+    const lab = `${sel.name ? shortName(sel) : TYPES[sel.type].short}: ${w ? vx.toFixed(0) + ' m/s' : vx.toFixed(2)} → ${pct(vy)}`, anchor = px > wd - 120 ? 'end' : 'start';
+    s += `<text class="lab" x="${anchor === 'end' ? px - 10 : px + 10}" y="${Math.max(py - 9, m.t + 8)}" text-anchor="${anchor}">${lab}</text>`;
+  }
+  $('#vChart').innerHTML = `<svg class="chart" viewBox="0 0 ${wd} ${h}" role="img" aria-label="Vulnerability curves">${s}</svg>`;
+  $('#vTypes').innerHTML = keys.map(k => `<button class="chip" data-vt="${k}" aria-pressed="${k === ST.vtype}"><span class="dot" style="background:var(--t-${k})"></span>${TYPES[k].short}</button>`).join('');
+  $('#vTblT').textContent = `At ${w ? tv + ' m/s' : 'slide index ' + tv.toFixed(2)}, share of value lost`;
+  $('#vTable').innerHTML = keys.map(k => { const d = f(k, tv); return `<div class="r"><span>${TYPES[k].short}</span><span class="tr"><i style="width:${d * 100}%;background:var(--t-${k})"></i></span><span class="pc">${pct(d)}</span></div>`; }).join('');
+  $('#vNote').textContent = w ? 'The curves are S-shaped: little happens below about 30 m/s, then damage climbs fast. Building type changes where the climb starts, which is why the same storm hurts a timber house far more than a masonry one.'
+    : 'Landslide damage needs both a susceptible slope and heavy rain, so the index is their product. Below roughly 0.35 little is lost; above 0.8 buildings are mostly destroyed, whatever they are made of.';
+}
+
+// --- Results ---
+function buildResults() { tabbody.innerHTML = `<div class="sec" id="rEv"></div><div class="sec" id="rLong"></div><div class="sec" id="rTail"></div>`; updateResults(); }
+function niceMax(v) { v = Math.max(v, 1e-6); const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+function epSeries(pf) { const out = []; for (let i = 0; i <= 60; i++) { const rp = Math.exp(Math.log(2) + (Math.log(500) - Math.log(2)) * i / 60); out.push([rp, lossAtRP(pf, rp)]); } return out; }
+function epChart() {
+  const wd = 340, h = 205, m = { l: 44, r: 12, t: 14, b: 32 }, pw = wd - m.l - m.r, ph = h - m.t - m.b;
+  const cur = epSeries(PF), pin = ST.pinned ? ST.pinned.pts : null; const maxY = niceMax(Math.max(...cur.map(p => p[1]), ...(pin ? pin.map(p => p[1]) : [0])));
+  const lx = Math.log(2), hx = Math.log(500), X = rp => m.l + (Math.log(rp) - lx) / (hx - lx) * pw, Y = v => m.t + (1 - v / maxY) * ph; let s = '';
+  for (let i = 0; i <= 4; i++) { const v = maxY * i / 4; s += `<line class="gl" x1="${m.l}" x2="${wd - m.r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${m.l - 6}" y="${Y(v) + 3.5}" text-anchor="end">${fv(v)}</text>`; }
+  for (const rp of [2, 5, 10, 25, 50, 100, 250, 500]) s += `<line class="gl" x1="${X(rp)}" x2="${X(rp)}" y1="${m.t}" y2="${m.t + ph}" opacity=".5"/><text x="${X(rp)}" y="${h - m.b + 14}" text-anchor="middle">${rp}</text>`;
+  s += `<line class="ax" x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${m.t + ph}"/><line class="ax" x1="${m.l}" x2="${wd - m.r}" y1="${m.t + ph}" y2="${m.t + ph}"/>`;
+  s += `<text class="ttl" x="${m.l + pw / 2}" y="${h - 3}" text-anchor="middle">Return period (years)</text><text class="ttl" x="${m.l}" y="9">Insured loss (m)</text>`;
+  const path = pts => pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('');
+  if (pin) s += `<path d="${path(pin)}" fill="none" stroke="var(--mut)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  s += `<path d="${path(cur)}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const v100 = lossAtRP(PF, 100); s += `<line x1="${X(100)}" x2="${X(100)}" y1="${Y(v100)}" y2="${m.t + ph}" stroke="var(--accent)" stroke-dasharray="2 3"/><circle cx="${X(100)}" cy="${Y(v100)}" r="4.5" fill="var(--accent)" stroke="var(--panel)" stroke-width="1.5"/><text class="lab" x="${X(100) - 8}" y="${Y(v100) - 8}" text-anchor="end">1-in-100: ${fm(v100)}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${wd} ${h}" role="img" aria-label="Exceedance probability curve">${s}</svg>`;
+}
+function updateResults() {
+  const on = B.filter(b => b.on);
+  if (!EV) $('#rEv').innerHTML = `<h4>This event</h4><div class="empty">Pick a scenario under the map to see what it does to this book.</div>`;
+  else {
+    const top = on.slice().sort((a, b) => b.sgu - a.sgu).slice(0, 4).filter(b => b.sgu > 0.005), wSh = SC.gu > 0 ? SC.w / SC.gu : 0;
+    $('#rEv').innerHTML = `<h4>${SCN[ST.scn].name} at ${(ST.inten * 100).toFixed(0)}% intensity</h4>
+    <table class="tbl"><tr><th></th><th>Ground-up</th><th>Insured</th></tr><tr><td>Whole book</td><td>${fm(SC.gu)}</td><td>${fm(SC.ins)}</td></tr>${top.map(b => `<tr><td>${b.name ? shortName(b) : TYPES[b.type].short}</td><td>${fm(b.sgu)}</td><td>${fm(b.sins)}</td></tr>`).join('')}</table>
+    <div class="note">Damage from wind ${pct(wSh)} · landslide ${pct(1 - wSh)}</div><div class="split"><i style="width:${wSh * 100}%;background:var(--wind)"></i><i style="width:${(1 - wSh) * 100}%;background:var(--slide)"></i></div>`;
+  }
+  const tiv = KPI.tiv || 1, aW = PF.aal > 0 ? PF.aalW / PF.aal : 0;
+  const rps = [10, 50, 100, 250].map(rp => ({ rp, v: lossAtRP(PF, rp), p: ST.pinned ? ST.pinned.rp[rp] : null }));
+  $('#rLong').innerHTML = `<h4>Over many years</h4>
+    <div class="stat"><div><div class="s1">Average annual loss</div><div class="s2">${fm(PF.aal)}</div></div><div><div class="s1">Loss cost</div><div class="s2">${pct2(PF.aal / tiv)}</div></div><div><div class="s1">Total TIV</div><div class="s2">${fm(KPI.tiv)}</div></div></div>
+    ${epChart()}
+    <div class="row"><button class="btn sm" data-act="pin">${ST.pinned ? 'Re-pin this curve' : 'Pin this curve to compare'}</button>${ST.pinned ? '<button class="btn sm" data-act="unpin">Clear pin</button><span class="note">Dashed line = pinned</span>' : '<span class="note">Pin it, change the book or terms, and watch it move.</span>'}</div>
+    <table class="tbl"><tr><th>Return period</th><th>Insured loss</th><th>% of TIV</th>${ST.pinned ? '<th>Pinned</th>' : ''}</tr>${rps.map(r => `<tr><td>1 in ${r.rp}</td><td>${fm(r.v)}</td><td>${pct(r.v / tiv)}</td>${ST.pinned ? `<td>${fm(r.p)}</td>` : ''}</tr>`).join('')}</table>
+    <div class="note">Average annual loss by peril: wind ${pct(aW)} · landslide ${pct(1 - aW)}</div><div class="split"><i style="width:${aW * 100}%;background:var(--wind)"></i><i style="width:${(1 - aW) * 100}%;background:var(--slide)"></i></div>`;
+  const top = TAIL.slice(0, 5), shown = top.reduce((a, t) => a + t.share, 0);
+  $('#rTail').innerHTML = `<h4>What drives the tail</h4><div class="note">Share of loss in the worst 1-in-50 years and beyond.</div><div class="tl">${top.map(t => `<div class="r"><span>${t.b.name ? shortName(t.b) : 'One ' + TYPES[t.b.type].short.toLowerCase() + ' risk'}</span><b class="mono">${pct(t.share)}</b><span class="tr"><i style="width:${t.share * 100}%"></i></span></div>`).join('')}<div class="r"><span>Everything else</span><b class="mono">${pct(Math.max(0, 1 - shown))}</b><span class="tr"><i style="width:${Math.max(0, 1 - shown) * 100}%;background:var(--mut)"></i></span></div></div>`;
+}
+function pinCurve() { const rp = {}; [10, 50, 100, 250].forEach(r => { rp[r] = lossAtRP(PF, r); }); ST.pinned = { pts: epSeries(PF), rp, kpi: Object.assign({}, KPI, { lr: KPI.aal / KPI.prem }) }; }
+
+// ---------- scenario controls ----------
+function buildScn() {
+  const el = $('#scn');
+  el.innerHTML = `<div class="scn-top"><span class="lbl">Event</span>${['none', 'aurora', 'brage', 'rain', 'gale'].map(k => `<button class="chip" data-scn="${k}" aria-pressed="${ST.scn === k}" title="${k === 'none' ? 'Hide the event' : SCN[k].blurb}">${k === 'none' ? 'None' : SCN[k].name}</button>`).join('')}</div>
+  <div class="sliders"><div class="sl"><label for="inten">Intensity</label><input id="inten" type="range" min="50" max="130" step="1" value="${ST.inten * 100}"><span class="v" id="intenV"></span></div>
+  <div class="sl wide"><label for="posR">Storm position</label><input id="posR" type="range" min="0" max="100" step="1" value="${ST.pos * 100}"><button class="btn sm" id="play">Play</button><span class="v" id="posV"></span></div></div>`;
+  updateScnReadout();
+}
+function updateScnReadout() {
+  $$('#scn [data-scn]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scn === ST.scn)));
+  const none = ST.scn === 'none'; $('#inten').disabled = none; $('#posR').disabled = none; $('#play').disabled = none;
+  $('#intenV').textContent = (ST.inten * 100).toFixed(0) + '%'; $('#posV').textContent = ST.pos >= 0.999 ? 'full swath' : (ST.pos * 100).toFixed(0) + '%';
+  $('#play').textContent = ST.playing ? 'Pause' : 'Play';
+  const tg = $('#evtag'); tg.hidden = !EV; if (EV) tg.innerHTML = `<b>${SCN[ST.scn].name}</b> · gust <b>${EV.V.toFixed(0)} m/s</b> · rain <b>${(EV.R * 250).toFixed(0)} mm</b>`;
+}
+let lastT = 0;
+function tick(ts) {
+  if (!ST.playing) return; const dt = Math.min(60, ts - lastT); lastT = ts; ST.pos = Math.min(1, ST.pos + dt / 7000);
+  $('#posR').value = ST.pos * 100; $('#posV').textContent = ST.pos >= 0.999 ? 'full swath' : (ST.pos * 100).toFixed(0) + '%'; buildFootprints(); dirty = true;
+  if (ST.pos >= 1) { ST.playing = false; $('#play').textContent = 'Play'; } else requestAnimationFrame(tick);
+}
+function setScn(k) { beginChange(); ST.scn = k; ST.playing = false; if (k !== 'none') ST.pos = 1; $('#posR').value = ST.pos * 100; if (k !== 'none' && !ST.layers.wind && !ST.layers.ls && !ST.layers.dmg) { setLayers({ wind: true, ls: true }); } refresh('scn'); }
+
+// ---------- layers + legend ----------
+const LAYERS = [['relief', 'Relief'], ['susc', 'Slide-prone slopes'], ['wind', 'Wind footprint'], ['ls', 'Landslide footprint'], ['dmg', 'Damage'], ['conc', 'Value concentration']];
+function buildLayers() { $('#layers').innerHTML = LAYERS.map(l => `<button class="chip" data-layer="${l[0]}" aria-pressed="${ST.layers[l[0]]}"><span class="dot"></span>${l[1]}</button>`).join(''); }
+function setLayers(o) { Object.assign(ST.layers, o); $$('#layers .chip').forEach(b => b.setAttribute('aria-pressed', String(ST.layers[b.dataset.layer]))); renderLegend(); dirty = true; }
+function grad(stops) { const p = []; for (let i = 0; i <= 6; i++) { const c = ramp(stops, i / 6), a = c[3] == null ? 1 : Math.min(1, c[3] / 255 + 0.2); p.push(`rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a}) ${i / 6 * 100}%`); } return `linear-gradient(90deg,${p.join(',')})`; }
+function renderLegend() {
+  const L = [], l = ST.layers;
+  if (l.wind && EV) L.push(['Peak gust (m/s)', WIND, ['14', '38', '62+']]);
+  if (l.ls && EV) L.push(['Landslide index', LSR, ['0.25', '0.6', '1.0']]);
+  if (l.susc) L.push(['Slide-proneness', SUSC, ['low', '', 'high']]);
+  if (l.dmg && EV) L.push(['Damage ratio', DMG, ['0', '30%', '60%+']]);
+  if (l.conc) { const g = concGrid(); L.push(['TIV per 5 km cell', [[0, [200, 230, 232, 60]], [1, [cl.accentRGB[0], cl.accentRGB[1], cl.accentRGB[2], 200]]], ['0', '', fm(g.mx)]]); }
+  $('#legend').innerHTML = L.map(x => `<div><div class="lg-t">${x[0]}</div><div class="bar2" style="background:${grad(x[1])}"></div><div class="ticks"><span>${x[2][0]}</span><span>${x[2][1]}</span><span>${x[2][2]}</span></div></div>`).join('');
+}
+
+// ---------- guide ----------
+const STEPS = [
+  { name: 'Exposure', title: 'Exposure: what is at risk, and where?',
+    lede: 'Every model starts with a list of what is insured: where it stands, what it is made of and what it is worth. A model cannot see risk that is not in this list.',
+    tries: ['Pick a building type and click the map. Use ×5 or ×15 to drop a cluster.', 'Load the West coast book, then the Diversified book, and compare the totals.', 'Switch on Value concentration and hover to see TIV within 5 km.'],
+    setup() { ST.scn = 'none'; ST.tab = 'exposure'; ST.tool = 'place'; setLayers({ relief: true, susc: false, wind: false, ls: false, dmg: false, conc: true }); },
+    notice() { const on = B.filter(b => b.on), st = on.filter(b => b.site), stT = st.reduce((a, b) => a + b.tiv, 0); return `<b>${st.length}</b> large sites hold <b>${pct(KPI.tiv ? stT / KPI.tiv : 0)}</b> of the <b>${fm(KPI.tiv)}</b> insured value. The other <b>${on.length - st.length}</b> buildings share the rest.`; } },
+  { name: 'Hazard', title: 'Hazard: how hard does it hit, and where?',
+    lede: 'The hazard module describes the physical event at every location. Wind is strongest where the storm lands and fades inland. Landslides need steep ground and heavy rain together.',
+    tries: ['Press Play to run Storm Aurora across the island.', 'Switch to Atlantic rain and see where the landslide footprint lights up.', 'Drag Intensity and watch the footprint grow and shrink.'],
+    setup() { if (ST.scn === 'none') { ST.scn = 'aurora'; } ST.pos = 1; ST.tab = 'exposure'; setLayers({ relief: true, susc: false, wind: true, ls: true, dmg: false, conc: false }); },
+    notice() { if (!EV) return 'Pick an event under the map.'; const p = SITES[0], e = SITES[3], n = B.filter(b => b.on && b.ss >= 0.3).length; return `Gust at Calder Port <b>${p.sv.toFixed(0)} m/s</b>, at Eastmere on the east coast <b>${e.sv.toFixed(0)} m/s</b>. <b>${n}</b> insured buildings sit where landslide intensity passes the damage threshold.`; } },
+  { name: 'Vulnerability', title: 'Vulnerability: how much damage does that cause?',
+    lede: 'A vulnerability curve turns intensity into a damage ratio, the share of a building’s value lost. Each construction type has its own curve, and none of them is a straight line.',
+    tries: ['Drag the test gust and compare timber with masonry at the same wind speed.', 'Select a building on the map to see where this event puts it on its curve.', 'Turn on the Damage layer to see every building’s loss.'],
+    setup() { if (ST.scn === 'none') ST.scn = 'aurora'; ST.pos = 1; ST.vperil = 'wind'; setLayers({ relief: true, susc: false, wind: true, ls: false, dmg: true, conc: false }); switchTab('vuln'); },
+    notice() { const T = TYPES.timber, a = dmgW(T, 30), b = dmgW(T, 45); return `A timber house loses <b>${pct(a)}</b> of its value at 30 m/s and <b>${pct(b)}</b> at 45 m/s. That is 50% more wind and <b>${(b / a).toFixed(1)}×</b> the damage.`; } },
+  { name: 'Financial', title: 'Financial terms: who pays for the damage?',
+    lede: 'Ground-up loss is what the damage costs. The policy then decides how much reaches the insurer: the deductible comes off first, then the limit applies, then the participation share.',
+    chips: [['cap-port', 'Cap Calder Port at 30m'], ['part-port', 'Port participation 80%'], ['reset-all', 'Reset all terms']],
+    tries: ['Select Calder Port, then use the chips above or the sliders in the Exposure tab.', 'Watch the Who-pays bar and the deltas on the three headline figures.', 'Pin the curve in Results, change a term, and compare.'],
+    setup() { if (ST.scn === 'none') ST.scn = 'aurora'; ST.pos = 1; setLayers({ relief: true, susc: false, wind: false, ls: false, dmg: true, conc: false }); ST.sel = SITES[0].id; ST.scope = 'one'; switchTab('exposure'); },
+    notice() { if (!EV) return 'Pick an event under the map.'; return `Ground-up loss <b>${fm(SC.gu)}</b>. The insurer pays <b>${fm(SC.ins)}</b> (${pct(SC.gu ? SC.ins / SC.gu : 0)}). Policy terms push <b>${fm(SC.gu - SC.ins)}</b> back to the clients.`; } }
+];
+const signed = x => (x >= 0 ? '+' : '−') + fm(Math.abs(x));
+const chg = (n, o) => (o > 0 ? (Math.abs(n / o - 1) < 0.005 ? 'unchanged' : ((n / o - 1) >= 0 ? '+' : '−') + (Math.abs(n / o - 1) * 100).toFixed(0) + '%') : '–');
+STEPS.push(
+  { phase: 2, name: 'Accumulation', title: 'Accumulation: when value piles up in one place',
+    lede: 'Calder Port and the Marram Refinery sit two kilometres apart, so one storm can reach both. The tail of the loss curve is set by that pile of value, not by the many small risks around it.',
+    chips: [['cap-pr', 'Cap port and refinery at 40m each'], ['cap-3', 'Cap all three west sites at 40m'], ['reset-all', 'Reset all terms']],
+    tries: ['Switch on Value concentration and find the peak 5 km cell.', 'Apply a cap with the chips, then open Results and compare the 1-in-100 with the dashed starting curve.', 'Weigh the tail loss the cap removes against the premium it gives up.'],
+    setup() { loadBookSync('west'); resetTermsAll(); restoreComp(); ST.scn = 'aurora'; ST.pos = 1; ST.tab = 'results'; ST.sel = null; ST.pinNext = true; setLayers({ relief: true, susc: false, wind: true, ls: false, dmg: false, conc: true }); },
+    notice() { const g = concGrid(), p = ST.pinned && ST.pinned.kpi; let t = `The busiest 5 km cell holds <b>${fm(g.mx)}</b>, ${pct(KPI.tiv ? g.mx / KPI.tiv : 0)} of the book. A 1-in-100 year loss is <b>${(KPI.rp100 / KPI.prem).toFixed(1)}×</b> the premium.`; if (p) t += ` Since the start: 1-in-100 <b>${signed(KPI.rp100 - p.rp100)}</b>, premium <b>${signed(KPI.prem - p.prem)}</b>.`; return t; } },
+  { phase: 2, name: 'Diversification', title: 'Diversification: does a bigger book mean a bigger tail?',
+    lede: 'Storms arrive from the west, so a west coast book suffers its worst losses together. Risks on the east coast add value that rarely takes damage in the same event.',
+    chips: [['add-east', '+ 35 east coast risks'], ['book-west', 'Back to the west coast book']],
+    tries: ['Add the east coast risks and read the changes against the starting point.', 'Open Results: the dashed curve is where you started, the solid one is now.', 'Run Storm Aurora, then Southern gale, and see which buildings are hit.'],
+    setup() { loadBookSync('west'); resetTermsAll(); restoreComp(); ST.scn = 'aurora'; ST.pos = 1; ST.tab = 'results'; ST.sel = null; ST.pinNext = true; setLayers({ relief: true, susc: false, wind: true, ls: false, dmg: false, conc: false }); },
+    notice() { const p = ST.pinned && ST.pinned.kpi; if (!p) return 'Add risks to see how the book changes.'; return `Since the start: TIV <b>${chg(KPI.tiv, p.tiv)}</b>, average annual loss <b>${chg(KPI.aal, p.aal)}</b>, 1-in-100 <b>${chg(KPI.rp100, p.rp100)}</b>. Loss cost moved from <b>${pct2(p.aal / p.tiv)}</b> to <b>${pct2(KPI.aal / KPI.tiv)}</b> of TIV.`; } },
+  { phase: 2, name: 'Adverse selection', title: 'Adverse selection: a competitor maps the landslide risk',
+    lede: 'We charge one flat rate. A competitor with a landslide map quotes the safe-zone risks cheaper, so those leave and the slide-prone ones stay. The book gets worse without a claim being paid.',
+    chips: [['comp-30', 'Competitor takes 30%'], ['risk-on', 'We price by landslide risk too'], ['comp-0', 'Reset']],
+    tries: ['Drag the competitor slider: dashed rings mark the risks that leave first.', 'Compare the premium lost with the expected loss lost.', 'Tick “We price by landslide risk too” and watch the loss ratio hold.'],
+    setup() { loadBookSync('west'); resetTermsAll(); restoreComp(); ST.scn = 'rain'; ST.pos = 1; ST.tab = 'results'; ST.sel = null; ST.pinNext = true; setLayers({ relief: true, susc: true, wind: false, ls: true, dmg: false, conc: false }); },
+    notice() { const p = ST.pinned && ST.pinned.kpi, gone = B.filter(b => b.gone).length, sm = B.filter(b => !b.site).length; if (!p) return ''; const lr = KPI.aal / KPI.prem; if (!gone) return 'Every risk pays the same rate on its value. Today the book earns about <b>' + pct(lr) + '</b> loss ratio. Now let a competitor in.'; return `<b>${gone}</b> of ${sm} small risks have left. Premium <b>${signed(KPI.prem - p.prem)}</b>, expected loss <b>${signed(KPI.aal - p.aal)}</b>. Loss ratio <b>${pct(lr)}</b> (was ${pct(p.lr)}).${ST.riskPrice ? ' Risk-based pricing keeps premium in step with expected loss.' : ''}`; } }
+);
+function buildSteps() {
+  const chip = (s, i) => `<button class="step ${i < ST.step ? 'done' : ''}" data-step="${i}" ${i === ST.step ? 'aria-current="step"' : ''}><span class="n">${i + 1}</span>${s.name}</button>`;
+  $('#steps').innerHTML = `<span class="phase">Phase 1 · Mechanics</span>` + STEPS.map((s, i) => s.phase === 2 ? '' : chip(s, i)).join('') + `<span class="phase gap">Phase 2 · Applications</span>` + STEPS.map((s, i) => s.phase === 2 ? chip(s, i) : '').join('');
+  $('#back').disabled = ST.step === 0; $('#next').disabled = ST.step === STEPS.length - 1;
+}
+function renderGuide() {
+  const s = STEPS[ST.step], g = $('#guide'); g.dataset.c = ST.collapsed ? '1' : '0';
+  g.innerHTML = `<div><h2>${s.title}</h2><p class="lede">${s.lede}</p>${s.chips ? `<div class="chips-inline">${s.chips.map(c => `<button class="chip" data-act="${c[0]}">${c[1]}</button>`).join('')}</div>` : ''}</div>
+    <div class="try"><h3>Try</h3><ul>${s.tries.map(t => `<li>${t}</li>`).join('')}</ul></div>
+    <div class="notice-wrap"><h3>Notice</h3><p class="notice" id="notice"></p></div>
+    <button class="btn sm hide" data-act="toggle-guide">${ST.collapsed ? 'Show' : 'Hide'}</button>`;
+  updateNotice();
+}
+function updateNotice() { const n = $('#notice'); if (n && KPI.tiv != null) n.innerHTML = STEPS[ST.step].notice(); }
+function renderGuideNotice() { updateNotice(); }
+function renderBiz() {
+  const el = $('#biz'), s = STEPS[ST.step]; if (!el) return; if (s.phase !== 2 || !KPI.prem) { el.hidden = true; return; }
+  el.hidden = false; const p = ST.pinned && ST.pinned.kpi, lr = KPI.aal / KPI.prem, was = (v, f) => p && Math.abs(v - f) > 0.005 ? 'was ' + fv(f) : '';
+  const cell = (k, v, w, cls) => `<div><div class="s1">${k}</div><div class="s2 ${cls || ''}">${v}</div><div class="s3">${w || ''}</div></div>`;
+  const gone = B.filter(b => b.gone).length, sm = B.filter(b => !b.site).length;
+  const c1 = cell(KPI.flat ? 'Premium · flat rate' : 'Premium · risk-based', fm(KPI.prem), p ? was(KPI.prem, p.prem) : (KPI.flat ? (ST.flatRate * 100).toFixed(2) + '% of TIV' : ''));
+  const c2 = cell('Expected loss', fm(KPI.aal), p ? was(KPI.aal, p.aal) : '');
+  const c3 = cell('Loss ratio', pct(lr), p && Math.abs(lr - p.lr) > 0.005 ? 'was ' + pct(p.lr) : '', lr > 0.85 ? 'bad' : '');
+  let c4; if (ST.step === 4) c4 = cell('1-in-100 ÷ premium', (KPI.rp100 / KPI.prem).toFixed(1) + '×', p ? 'was ' + (p.rp100 / p.prem).toFixed(1) + '×' : '');
+  else if (ST.step === 5) c4 = cell('1-in-100 ÷ TIV', pct(KPI.rp100 / KPI.tiv), p ? 'was ' + pct(p.rp100 / p.tiv) : '');
+  else c4 = cell('Risks lost', gone + ' of ' + sm, gone ? pct(gone / sm) + ' of small risks' : '');
+  el.innerHTML = c1 + c2 + c3 + c4;
+}
+function buildComp() {
+  $('#comp').innerHTML = `<div class="scn-top"><span class="lbl">Competitor</span><span class="note">Prices landslide risk by location and takes the safest small risks first.</span></div>
+  <div class="sliders"><div class="sl"><label for="compR">Share taken</label><input id="compR" type="range" min="0" max="60" step="5" value="${ST.comp * 100}"><span class="v" id="compV"></span></div>
+  <div class="row"><label class="note"><input type="checkbox" id="riskP" ${ST.riskPrice ? 'checked' : ''}> We price by landslide risk too</label><button class="btn sm" id="reprice">Re-price flat rate</button></div></div>`;
+  syncComp();
+}
+function syncComp() { const r = $('#compR'); if (!r) return; r.value = ST.comp * 100; $('#compV').textContent = (ST.comp * 100).toFixed(0) + '%'; $('#riskP').checked = ST.riskPrice; $('#reprice').disabled = ST.comp === 0 || ST.riskPrice; }
+function goStep(i) {
+  ST.playing = false; ST.step = clamp(i, 0, STEPS.length - 1); if (ST.step !== 6) restoreComp(); STEPS[ST.step].setup(); buildSteps(); renderGuide(); buildScn(); buildComp(); $('#comp').hidden = ST.step !== 6;
+  $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === ST.tab))); buildTab(); refresh('all'); refresh('scn');
+}
+
+// ---------- actions (delegated) ----------
+function doAct(a) {
+  if (a === 'book-west') loadBook('west'); else if (a === 'book-div') loadBook('div'); else if (a === 'add-east') addEast(); else if (a === 'clear') clearSmall();
+  else if (a === 'reset-terms') { const s = getSel(); if (s) setTermsFor(scopeTargets(s), { ded: 0.01, lim: null, part: 1 }); }
+  else if (a === 'cap-port') { ST.sel = SITES[0].id; ST.scope = 'one'; if (ST.tab !== 'exposure') switchTab('exposure'); setTermsFor([SITES[0]], { lim: 30 }); }
+  else if (a === 'part-port') { ST.sel = SITES[0].id; ST.scope = 'one'; if (ST.tab !== 'exposure') switchTab('exposure'); setTermsFor([SITES[0]], { part: 0.8 }); }
+  else if (a === 'reset-all') setTermsFor(B, { ded: 0.01, lim: null, part: 1 });
+  else if (a === 'cap-pr') { ST.sel = SITES[0].id; ST.scope = 'one'; setTermsFor([SITES[0], SITES[1]], { lim: 40 }); }
+  else if (a === 'cap-3') { ST.sel = SITES[0].id; ST.scope = 'one'; setTermsFor([SITES[0], SITES[1], SITES[2]], { lim: 40 }); }
+  else if (a === 'comp-30') { beginChange(); ST.comp = 0.3; syncComp(); refresh('all'); }
+  else if (a === 'comp-0') { beginChange(); ST.comp = 0; ST.riskPrice = false; ST.flatRate = null; syncComp(); refresh('all'); }
+  else if (a === 'risk-on') { beginChange(); ST.riskPrice = true; syncComp(); refresh('all'); }
+  else if (a === 'pin') { pinCurve(); updateResults(); renderBiz(); updateNotice(); } else if (a === 'unpin') { ST.pinned = null; updateResults(); }
+  else if (a === 'toggle-guide') { ST.collapsed = !ST.collapsed; renderGuide(); }
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,input'); if (!t) return;
+  if (t.dataset.act) doAct(t.dataset.act);
+  else if (t.dataset.step != null) goStep(+t.dataset.step);
+  else if (t.dataset.tab) switchTab(t.dataset.tab);
+  else if (t.dataset.layer) setLayers({ [t.dataset.layer]: !ST.layers[t.dataset.layer] });
+  else if (t.dataset.scn) setScn(t.dataset.scn);
+  else if (t.dataset.tool) { ST.tool = t.dataset.tool; updateExposure(); }
+  else if (t.dataset.type) { ST.type = t.dataset.type; ST.tool = 'place'; updateExposure(); }
+  else if (t.dataset.n) { ST.cluster = +t.dataset.n; updateExposure(); }
+  else if (t.dataset.pick) selectB(+t.dataset.pick);
+  else if (t.dataset.vt) { ST.vtype = t.dataset.vt; updateVuln(); }
+  else if (t.dataset.peril) { ST.vperil = t.dataset.peril; updateVuln(); }
+  else if (t.id === 'reprice') { beginChange(); ST.flatRate = flatRateOf(B, PF); refresh('all'); }
+  else if (t.id === 'play') { if (ST.playing) { ST.playing = false; } else { if (ST.pos >= 0.999) ST.pos = 0; ST.playing = true; lastT = performance.now(); requestAnimationFrame(tick); } updateScnReadout(); }
+  else if (t.dataset.site) { beginChange(); const b = B.find(x => x.id === +t.dataset.site); if (b) { b.inc = t.checked; b.on = b.inc && !b.gone; } refresh('all'); }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'compR') { beginChange(); ST.comp = +t.value / 100; syncComp(); refresh('all'); }
+  else if (t.id === 'inten') { beginChange(); ST.inten = +t.value / 100; refresh('scn'); }
+  else if (t.id === 'posR') { ST.pos = +t.value / 100; ST.playing = false; buildFootprints(); updateScnReadout(); dirty = true; }
+  else if (t.id === 'tDed') setTerms({ ded: +t.value / 100 });
+  else if (t.id === 'tPart') setTerms({ part: +t.value / 100 });
+  else if (t.id === 'tLim') { const v = +t.value; if (v > 0) setTerms({ lim: v }); }
+  else if (t.id === 'vTest') { ST.test[ST.vperil] = +t.value; updateVuln(); }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'riskP') { beginChange(); ST.riskPrice = t.checked; syncComp(); refresh('all'); }
+  else if (t.id === 'tNoLim') { const s = getSel(); if (!s) return; $('#tLim').disabled = t.checked; setTerms({ lim: t.checked ? null : (+$('#tLim').value || Math.round(s.tiv * 0.5)) }); }
+  else if (t.id === 'tScope') { ST.scope = t.value; }
+});
+$('#back').addEventListener('click', () => goStep(ST.step - 1));
+$('#next').addEventListener('click', () => goStep(ST.step + 1));
+
+// ---------- start-up ----------
+function onTheme() { readTheme(); if (gS) { buildRelief(); } renderLegend(); dirty = true; }
+function init() {
+  readTheme(); buildCoast(); resize(); new ResizeObserver(resize).observe(wrap);
+  buildLayers(); buildSteps(); renderGuide(); buildScn(); buildComp(); $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === ST.tab)));
+  tabbody.innerHTML = '<div class="empty">Building the island and its 3,000-event hazard set…</div>';
+  setTimeout(() => {
+    buildFields(); buildRelief();
+    SITES = siteDefs().map(s => addB({ name: s.name, type: s.type, tiv: s.tiv, x: s.x, y: s.y, site: true, kind: s.kind, note: s.note }));
+    for (const s of scatter(['west'], 60, 11, B)) addB(s);
+    ready = true; STEPS[0].setup(); calcScenario(); recompute(); buildTab(); buildFootprints(); renderKPIs(); renderPays(); renderBiz(); updateScnReadout(); updateNotice(); renderLegend(); dirty = true;
+  }, 40);
+  const mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', onTheme);
+  new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  requestAnimationFrame(loop);
+}
+init();
+})();
+
+</script>
+
+</body></html>
